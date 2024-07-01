@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.Neo;
-import frc.robot.util.Constants.ElevatorConstants;
+import frc.robot.util.Constants.ClimbConstants;
 import monologue.Logged;
 
 public class Elevator extends SubsystemBase implements Logged {
@@ -36,10 +36,10 @@ public class Elevator extends SubsystemBase implements Logged {
     public Command toTop(boolean right) {
         
        if (right) {
-            return runOnce(() -> this.setPosition(ElevatorConstants.ALMOST_HIGH_LIMIT, ElevatorConstants.HIGH_LIMIT));
+            return runOnce(() -> this.setPosition(ClimbConstants.ALMOST_HIGH_LIMIT, ClimbConstants.HIGH_LIMIT));
        } 
        else {
-            return runOnce(() -> this.setPosition(ElevatorConstants.HIGH_LIMIT, ElevatorConstants.ALMOST_HIGH_LIMIT));
+            return runOnce(() -> this.setPosition(ClimbConstants.HIGH_LIMIT, ClimbConstants.ALMOST_HIGH_LIMIT));
        }
        
     }
@@ -48,8 +48,8 @@ public class Elevator extends SubsystemBase implements Logged {
         
 
         ParallelRaceGroup group = new ParallelRaceGroup();
-        group.addCommands(Commands.runOnce(() -> elevatorRight.setPosition(ElevatorConstants.ROCK_BOTTOM)));
-        group.addCommands(Commands.runOnce(() -> elevatorLeft.setPosition(ElevatorConstants.ROCK_BOTTOM)));
+        group.addCommands(Commands.runOnce(() -> elevatorRight.setPosition(ClimbConstants.ROCK_BOTTOM)));
+        group.addCommands(Commands.runOnce(() -> elevatorLeft.setPosition(ClimbConstants.ROCK_BOTTOM)));
         
         return Commands.runOnce(() -> group.execute(), this);
     }
