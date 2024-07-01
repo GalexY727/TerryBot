@@ -32,13 +32,11 @@ public class Climb extends SubsystemBase implements Logged {
         rightMotor.setPosition(pos2);
     }
 
-    
-
     public Command toTop(ChainPosition chainPosition) {
     
        if (chainPosition == ChainPosition.LEFT) {
             return runOnce(() -> this.setPosition(ClimbConstants.ALMOST_HIGH_LIMIT, ClimbConstants.HIGH_LIMIT));
-       } 
+       }
        else if (chainPosition == ChainPosition.RIGHT) {
             return runOnce(() -> this.setPosition(ClimbConstants.HIGH_LIMIT, ClimbConstants.ALMOST_HIGH_LIMIT));
        }
@@ -50,11 +48,17 @@ public class Climb extends SubsystemBase implements Logged {
     
     public Command toBottom() {
 
+        // This mimics the behavior of an asProxy command
+        // without the inclusion of the wrapper that asProxy brings along with it.
+        // therefore it is more advantagous to use this
+        // becuase we can't have two super.runOnce's 
+        // as they would require this subsystem twice
         ParallelRaceGroup group = new ParallelRaceGroup();
         group.addCommands(Commands.runOnce(() -> rightMotor.setPosition(ClimbConstants.ROCK_BOTTOM)));
         group.addCommands(Commands.runOnce(() -> leftMotor.setPosition(ClimbConstants.ROCK_BOTTOM)));
+        group.addRequirements(this);
         
-        return Commands.runOnce(() -> group.execute(), this);
+        return group;
     }
     
 }
