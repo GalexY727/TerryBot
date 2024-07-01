@@ -5,7 +5,7 @@ import java.util.function.BooleanSupplier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.ElevatorSubs.Elevator;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.TriggerWheel;
 

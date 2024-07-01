@@ -81,4 +81,9 @@ public class Shooter extends SubsystemBase {
 
         return lowerPair.interpolate(upperPair, (distance - lowerIndex) / (upperIndex - lowerIndex));
     }
+
+    public Object setSpeed(Double speed) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setSpeed'");
+    }
 }
