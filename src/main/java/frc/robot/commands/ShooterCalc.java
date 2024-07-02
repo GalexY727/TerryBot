@@ -7,7 +7,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.shooter.*;
 import frc.robot.util.Constants.FieldConstants;
@@ -20,9 +19,9 @@ public class ShooterCalc {
   private Shooter shooter;
   private BooleanSupplier aiming;
 
-  public ShooterCalc() {
-    this.pivot = new Pivot();
-    this.shooter = new Shooter();
+  public ShooterCalc(Shooter shooter, Pivot pivot) {
+    this.pivot = pivot;
+    this.shooter = shooter;
     this.aiming = (() -> false);
   }
 
@@ -43,7 +42,7 @@ public class ShooterCalc {
   }
 
   /**
-   * The function prepares a command to fire at a moving target while continuously aiming until
+   * The function prepares a command to fire at a stationary target while moving and continuously aiming until
    * instructed to stop.
    * 
    * If we are currently aiming, toggle aiming to false, cancelling repeated calls to prepareFireComman
@@ -62,9 +61,9 @@ public class ShooterCalc {
       return Commands.runOnce(() -> toggleAiming());
     }
     return Commands.runOnce(() -> toggleAiming())
-            .andThen(prepareFireCommand(shootAtSpeaker, swerve.getPose()))
-            .repeatedly()
-            .until(() -> !aiming.getAsBoolean());
+            .andThen(prepareFireCommand(shootAtSpeaker, swerve.getPose())
+                      .repeatedly()
+                      .until(() -> !aiming.getAsBoolean()));
   }
 
   /**
