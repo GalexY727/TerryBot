@@ -54,7 +54,7 @@ public class Handoff {
     }
 
     public Trigger readyToShoot() {
-        return new Trigger(() -> pivot.atDesiredAngle() && shooter.atDesiredRPM());
+        return new Trigger(() -> pivot.isAtDesiredAngle() && shooter.atDesiredRPM());
     }
 
     public Command stopAllMotors() {
@@ -71,7 +71,7 @@ public class Handoff {
     public Command clawToShooter(){
         // this.notePosition = NotePosition.CLAW; ^^^
         Command shoot = emptyCommand;
-        this.shooterCalc.prepareFireCommand(() -> true, swerve.getPose());
+        this.shooterCalc.prepareFireMovingCommand(() -> true, swerve);
         if ( this.readyToShoot().getAsBoolean() ) {
             // run the indexer and intake to make sure the note gets to the shooter
             shoot = 
