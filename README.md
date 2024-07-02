@@ -20,4 +20,4 @@ This repository contains the code for a basic robot that is capable of performin
  
 Auto paths are broken into components to be followed bit by bit, which means that they can later be created dynamically as a modular system 
 
-![Autonomous Path GIF](path/to/gif)
+![Autonomous Path GIF](https://github.com/GalexY727/TerryBot/assets/65139378/30872008-d3be-437e-8d91-b80819e0e7c0)
