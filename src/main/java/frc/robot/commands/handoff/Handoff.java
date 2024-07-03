@@ -54,14 +54,15 @@ public class Handoff {
     }
 
     public Trigger readyToShoot() {
-        return new Trigger(() -> pivot.isAtDesiredAngle() && shooter.atDesiredRPM());
+        return new Trigger(() -> pivot.isAtDesiredAngle().getAsBoolean() && shooter.atDesiredRPM().getAsBoolean());
     }
 
     public Command stopAllMotors() {
         return Commands.parallel(
             intake.stop(),
             indexer.stop(),
-            elevator.stop(),
+            // TODO: make this a command
+            Commands.runOnce(() -> elevator.setPosition(0)),
             claw.stop(),
             shooter.stop()
         );
