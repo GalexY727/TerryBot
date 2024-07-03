@@ -25,6 +25,8 @@ public class ShooterCalc {
     this.aiming = false;
   }
 
+
+
   /**
    * The function prepares a fire command by calculating the speed and angle for the robot's shooter
    * based on the robot's pose and whether it should shoot at the speaker.
@@ -99,23 +101,37 @@ public class ShooterCalc {
     return pivot.setAngleCommand(pair.getAngle());
   }
 
+  /**
+   * The function is a command that resets the shooter to a speed of 0 and an angle constant and 
+   * once it has reached its desired states it sets the shooter to a negative speed to pass the 
+   * piece back to handoff
+   * 
+   * @return The method is returning a Command object.
+   */
   public Command sendBackCommand() {
-    return pivot.setRestAngleCommand()
-              .andThen(Commands.waitUntil(pivot.isAtDesiredAngle()))
+    return resetShooter()
+              .andThen(Commands.waitUntil(() -> pivot.atDesiredAngle().getAsBoolean() && shooter.atDesiredRPM().getAsBoolean()))
               .andThen(shooter.setSpeedCommand(ShooterConstants.SHOOTER_BACK_SPEED));
   }
 
+  /**
+   * Makes aiming false so that we stop any aiming loop currently happening, and then sets the
+   * shooter to a speed of 0 and the pivot angle to a predetermined constant
+   * 
+   * @return The method is returning a Command object.
+   */
   public Command resetShooter() {
       return Commands.runOnce(() -> stopAiming())
               .andThen(shooter.stop()
                         .alongWith(pivot.setRestAngleCommand()));
   }
 
-  // Toggles the aiming BooleanSupplier
+  // Toggles the aiming boolean
   private void toggleAiming() {
     this.aiming = !aiming;
   }
 
+  // Sets the aiming boolean to false
   private void stopAiming() {
     this.aiming = false;
   }
@@ -143,4 +159,21 @@ public class ShooterCalc {
 
         return lowerPair.interpolate(upperPair, (distance - lowerIndex) / (upperIndex - lowerIndex));
     }
+
+
+
+  public boolean pivotAtDesiredAngle() {
+      return pivot.atDesiredAngle().getAsBoolean();
+  }
+
+  public boolean shooterAtDesiredRPM() {
+    return shooter.atDesiredRPM().getAsBoolean();
+  }
+
+  public Command stopMotors() {
+    return Commands.parallel(
+        shooter.stop(),
+        pivot.stop()
+    );
+  }
 }
