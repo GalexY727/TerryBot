@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.ElevatorSubs;
+package frc.robot.subsystems.elevator;
 
 import java.util.function.BooleanSupplier;
 
@@ -36,10 +36,10 @@ public class Elevator extends SubsystemBase {
         leftElevator.addFollower(rightElevator, true);
         leftElevator.getEncoder().setPositionConversionFactor(TrapConstants.ELEVATOR_POSITION_CONVERSION_FACTOR);
         leftElevator.setPID(
-            TrapConstants.TRAP_P,
-            TrapConstants.TRAP_I,
-            TrapConstants.TRAP_D, 
-            TrapConstants.TRAP_ELEVATOR_MIN_OUTPUT,  TrapConstants.TRAP_ELEVATOR_MAX_OUTPUT);
+                TrapConstants.TRAP_P,
+                TrapConstants.TRAP_I,
+                TrapConstants.TRAP_D,
+                TrapConstants.TRAP_ELEVATOR_MIN_OUTPUT, TrapConstants.TRAP_ELEVATOR_MAX_OUTPUT);
     }
 
     @Override
@@ -53,9 +53,9 @@ public class Elevator extends SubsystemBase {
 
     public BooleanSupplier isAtTargetPosition() {
         return () -> MathUtil.applyDeadband(
-            Math.abs(
-                this.getPosition() - leftElevator.getTargetPosition()),
-            TrapConstants.ELEVATOR_DEADBAND) == 0;
+                Math.abs(
+                        this.getPosition() - leftElevator.getTargetPosition()),
+                TrapConstants.ELEVATOR_DEADBAND) == 0;
     }
 
     public void setPosition(double pos) {
@@ -64,7 +64,7 @@ public class Elevator extends SubsystemBase {
 
     public Command setPositionCommand(double pos) {
         return runOnce(() -> this.setPosition(pos))
-            .andThen(Commands.waitUntil(this.isAtTargetPosition()));
+                .andThen(Commands.waitUntil(this.isAtTargetPosition()));
     }
 
     public Command stop() {
