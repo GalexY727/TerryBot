@@ -14,13 +14,13 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.Drive;
-import frc.robot.commands.NoteTrajectory;
 import frc.robot.commands.ShooterCalc;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.shooter.Pivot;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.PatriBoxController;
 import frc.robot.util.PoseCalculations;
+import frc.robot.util.SpeedAngleTriplet;
 import frc.robot.util.Constants.FieldConstants;
 import frc.robot.util.Constants.NeoMotorConstants;
 import frc.robot.util.Constants.OIConstants;
@@ -45,8 +45,6 @@ public class RobotContainer implements Logged {
     private Pivot pivot;
     private ShooterCalc shooterCalc;
 
-    private NoteTrajectory noteTrajectory;
-
     public RobotContainer() {
         driver = new PatriBoxController(OIConstants.DRIVER_CONTROLLER_PORT, OIConstants.DRIVER_DEADBAND);
         operator = new PatriBoxController(OIConstants.OPERATOR_CONTROLLER_PORT, OIConstants.OPERATOR_DEADBAND);
@@ -61,8 +59,6 @@ public class RobotContainer implements Logged {
         shooter = new Shooter();
         pivot = new Pivot();
         shooterCalc = new ShooterCalc(shooter, pivot);
-
-        noteTrajectory = new NoteTrajectory();
 
         limelight.setDefaultCommand(Commands.run(() -> {
             // Create an "Optional" object that contains the estimated pose of the robot
@@ -128,7 +124,8 @@ public class RobotContainer implements Logged {
         
         driver.x().onTrue(intake.stop());
 
-        driver.a().onTrue(noteTrajectory.getNoteTrajectoryCommand(swerve::getPose));
+        // TODO: change the SpeedAnglePair to have the corresponding values from shooter calc
+        driver.a().onTrue(shooterCalc.getNoteTrajectoryCommand(swerve::getPose, new SpeedAngleTriplet(12.0, 12.0, 45.0)));
 
     }
 

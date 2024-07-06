@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.Swerve;
@@ -23,11 +24,14 @@ public class ShooterCalc implements Logged {
     private Pivot pivot;
     private Shooter shooter;
     private boolean aiming;
+
+    private NoteTrajectory noteTrajectory;
     
     public ShooterCalc(Shooter shooter, Pivot pivot) {
         this.pivot = pivot;
         this.shooter = shooter;
         this.aiming = false;
+        this.noteTrajectory = noteTrajectory;
     }
     
     /**
@@ -47,7 +51,7 @@ public class ShooterCalc implements Logged {
         SpeedAngleTriplet triplet = calculateSpeed(robotPose, shootAtSpeaker.getAsBoolean());
         
         return pivot.setAngleCommand(triplet.getAngle())
-        .alongWith(shooter.setSpeedCommand(triplet.getSpeeds()));
+            .alongWith(shooter.setSpeedCommand(triplet.getSpeeds()));
     }
     
     @Log.NT
@@ -293,5 +297,9 @@ public class ShooterCalc implements Logged {
         return Commands.parallel(
                 shooter.stop(),
                 pivot.stop());
+    }
+
+    public Command getNoteTrajectoryCommand(Supplier<Pose2d> pose, SpeedAngleTriplet speedAngleTriplet) {
+        return noteTrajectory.getNoteTrajectoryCommand(pose, speedAngleTriplet);
     }
 }
