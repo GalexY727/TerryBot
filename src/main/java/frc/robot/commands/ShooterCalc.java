@@ -23,13 +23,13 @@ public class ShooterCalc implements Logged {
     private Pivot pivot;
     private Shooter shooter;
     private boolean aiming;
-
+    
     public ShooterCalc(Shooter shooter, Pivot pivot) {
         this.pivot = pivot;
         this.shooter = shooter;
         this.aiming = false;
     }
-
+    
     /**
      * The function prepares a fire command by calculating the speed and angle for
      * the robot's shooter
@@ -45,17 +45,18 @@ public class ShooterCalc implements Logged {
      */
     public Command prepareFireCommand(BooleanSupplier shootAtSpeaker, Pose2d robotPose) {
         SpeedAngleTriplet triplet = calculateSpeed(robotPose, shootAtSpeaker.getAsBoolean());
-
+        
         return pivot.setAngleCommand(triplet.getAngle())
-                .alongWith(shooter.setSpeedCommand(triplet.getSpeeds()));
+        .alongWith(shooter.setSpeedCommand(triplet.getSpeeds()));
     }
-
+    
     @Log.NT
     Rotation2d currentAngleToSpeaker;
     @Log.NT
     Pose2d robotPoseAngled;
     @Log.NT
     Pose2d robotPoseSurely;
+
 
     /**
      * Calculates the angle to the speaker based on the robot's pose and velocity.
@@ -86,12 +87,52 @@ public class ShooterCalc implements Logged {
         return new Rotation2d(velocityTranslation.getX(), velocityTranslation.getY());
     }
 
+    /**
+     * TODO: These should both probably work off of the current speed, not the desired speed.
+     * This method is averaging the speeds to make a rough estimate of the speed of the note (or the edge of the wheels).
+     * The formula used is V = 2π * D/2 * RPM/60.
+     * First, it converts from Rotations per Minute to Rotations per Second.
+     * Then, it converts from Rotations per Second to Radians per Second.
+     * Finally, it multiplies by the radius of the wheel contacting it.
+     * As v = rw (w = omega | angular velocity of wheel).
+     * 
+     * Converts RPM (Revolutions Per Minute) to velocity in meters per second.
+     * @param speeds a pair of RPM values representing the speeds of two shooter wheels
+     * @return the velocity in meters per second
+     */
     public double rpmToVelocity(Pair<Double, Double> speeds) {
-        return 12;
+        
+        double rotationsPerMinute = (speeds.getFirst() + speeds.getSecond()) / 2.0;
+        double rotationsPerSecond = rotationsPerMinute / 60.0;
+        double radiansPerSecond = rotationsPerSecond * Math.PI;
+
+        double diameter = ShooterConstants.WHEEL_DIAMETER_METERS;
+
+        // Normally this is 1 radius * 2 pi
+        // but we are doing 2 radius * 1 pi
+        // because we are given a diameter
+        return diameter * radiansPerSecond;
     }
 
-    public double velocityToRPM(double velocity) {
-        return 1;
+
+    /**
+     * Converts the velocity of the shooter wheel to RPM (Rotations Per Minute).
+     * Equation: ((V/(2π)) / (D/2)) * 60 = RPM
+     * 
+     * @param noteVelocity the velocity of the shooter wheel in meters per second
+     * @return the RPM (Rotations Per Minute) of the shooter wheel
+     */
+    public double velocityToRPM(double noteVelocity) {
+        double diameter = ShooterConstants.WHEEL_DIAMETER_METERS;
+    
+        // Convert velocity back to radians per second
+        double radiansPerSecond = noteVelocity / diameter;
+    
+        // Convert radians per second back to rotations per second
+        double rotationsPerSecond = radiansPerSecond / Math.PI;
+    
+        // Convert rotations per second back to rotations per minute
+        return rotationsPerSecond * 60.0;
     }
 
     /**
@@ -225,14 +266,29 @@ public class ShooterCalc implements Logged {
         return ShooterConstants.INTERPOLATION_MAP.get(distanceFeet);
     }
 
+    /**
+     * Checks if the pivot is at the desired angle.
+     * 
+     * @return true if the pivot is at the desired angle, false otherwise.
+     */
     public boolean pivotAtDesiredAngle() {
         return pivot.atDesiredAngle().getAsBoolean();
     }
 
+    /**
+     * Checks if the shooter is at the desired RPM.
+     * 
+     * @return true if the shooter is at the desired RPM, false otherwise
+     */
     public boolean shooterAtDesiredRPM() {
         return shooter.atDesiredRPM().getAsBoolean();
     }
 
+    /**
+     * Stops the motors of the shooter and pivot subsystems.
+     * 
+     * @return The command to stop the motors.
+     */
     public Command stopMotors() {
         return Commands.parallel(
                 shooter.stop(),
