@@ -139,12 +139,12 @@ public final class Constants {
          */
         public static final HashMap<Integer, SpeedAngleTriplet> SPEAKER_DISTANCES_TO_SPEEDS_AND_ANGLE_MAP = new HashMap<Integer, SpeedAngleTriplet>() {
             {
-                put(5, SpeedAngleTriplet.of(3000.0, 2000.0, 60.0));
-                put(10, SpeedAngleTriplet.of(3000.0, 2000.0, 50.0));
-                put(15, SpeedAngleTriplet.of(3000.0, 2000.0, 40.0));
-                put(20, SpeedAngleTriplet.of(3000.0, 2000.0, 30.0));
-                put(25, SpeedAngleTriplet.of(3000.0, 2000.0, 20.0));
-                put(30, SpeedAngleTriplet.of(3000.0, 2000.0, 10.0));
+                put(5, SpeedAngleTriplet.of(3000.0, 3000.0, 45.0));
+                put(10, SpeedAngleTriplet.of(4000.0, 4000.0, 45.0));
+                put(15, SpeedAngleTriplet.of(6000.0, 4000.0, 40.0));
+                put(20, SpeedAngleTriplet.of(6000.0, 4000.0, 30.0));
+                put(25, SpeedAngleTriplet.of(6000.0, 4000.0, 20.0));
+                put(30, SpeedAngleTriplet.of(6000.0, 4000.0, 10.0));
             }
         };
 
@@ -502,10 +502,12 @@ public final class Constants {
                 // All points are in meters and radians
                 // All relative to the blue origin
                 // Blue Speaker
-                new Pose2d(0, 5.547, Rotation2d.fromDegrees(180)),
+                new Pose2d(0, 5.547, Rotation2d.fromDegrees(0)),
                 // Red Speaker
-                new Pose2d(FIELD_WIDTH_METERS, 5.547, Rotation2d.fromDegrees(180)),
+                new Pose2d(FIELD_WIDTH_METERS, 5.547, Rotation2d.fromDegrees(0)),
         };
+
+        public static final double SPEAKER_HEIGHT = 2.08;
 
         private static final Pose2d[] AMP_POSITIONS = new Pose2d[] {
                 // All points are in meters and radians
@@ -542,5 +544,7 @@ public final class Constants {
 
         public static final Translation2d PIVOT_OFFSET_METERS = new Translation2d(0.112, 0.21);
     }
+
+    public static final double GRAVITY = 9.8;
 
 }

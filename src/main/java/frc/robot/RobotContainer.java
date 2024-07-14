@@ -179,7 +179,7 @@ public class RobotContainer implements Logged {
             .onTrue(intake.outCommand());
         
         controller.leftBumper()
-            .toggleOnTrue(shooterCalc.prepareFireMovingCommand(() -> true, swerve::getPose));
+            .toggleOnTrue(shooterCalc.prepareSWDSimCommand(() -> true, swerve::getPose, swerve::getRobotRelativeVelocity));
         
         controller.leftTrigger()
             .onTrue(shooterCalc.resetShooter());
@@ -197,7 +197,7 @@ public class RobotContainer implements Logged {
                         return new ChassisSpeeds(
                             controller.getLeftY(),
                             controller.getLeftX(),
-                            swerve.getAlignmentSpeeds(shooterCalc.calculateSWDAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
+                            swerve.getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
                     },
                     () -> true)));
 
