@@ -22,12 +22,15 @@ import frc.robot.subsystems.elevator.Claw;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.shooter.Pivot;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.util.CalibrationControl;
 import frc.robot.util.PatriBoxController;
 import frc.robot.util.Constants.FieldConstants;
 import frc.robot.util.Constants.NTConstants;
 import frc.robot.util.Constants.NeoMotorConstants;
 import frc.robot.util.Constants.OIConstants;
 import monologue.Annotations.Log;
+import frc.robot.util.PIDNotConstants;
+import frc.robot.util.PIDTunerCommands;
 import monologue.Logged;
 
 public class RobotContainer implements Logged {
@@ -48,6 +51,8 @@ public class RobotContainer implements Logged {
     private Elevator elevator;
     private ShooterCalc shooterCalc;
     private PieceControl pieceControl;
+    private CalibrationControl calibrationControl;
+    private PIDTunerCommands PIDTuner;
     
     @Log
     public static Pose3d[] components3d = new Pose3d[5];
@@ -64,7 +69,7 @@ public class RobotContainer implements Logged {
         operator = new PatriBoxController(OIConstants.OPERATOR_CONTROLLER_PORT, OIConstants.OPERATOR_DEADBAND);
         DriverStation.silenceJoystickConnectionWarning(true);
         
-        // limelight = new Limelight();
+        limelight = new Limelight();
         intake = new Intake();
         climb = new Climb();
         swerve = new Swerve();
@@ -76,9 +81,18 @@ public class RobotContainer implements Logged {
         
         pivot = new Pivot();
         incinerateMotors();
+
+        limelight = new Limelight();
         
         shooterCalc = new ShooterCalc(shooter, pivot);
         
+        PIDTuner = new PIDTunerCommands(new PIDNotConstants[] {
+            pivot.getPIDNotConstants(),
+            shooter.getPIDNotConstants(),
+            elevator.getPIDNotConstants(),
+            climb.getPidNotConstants()
+        });
+
         pieceControl = new PieceControl(
             intake,
             triggerWheel,
@@ -86,8 +100,10 @@ public class RobotContainer implements Logged {
             claw,
             shooterCalc
         );
+
+        calibrationControl = new CalibrationControl();
         
-        if (false) {
+        if (limelight.isConnected()) {
             limelight.setDefaultCommand(Commands.run(() -> {
                 // Create an "Optional" object that contains the estimated pose of the robot
                 // This can be present (sees tag) or not present (does not see tag)
@@ -121,10 +137,23 @@ public class RobotContainer implements Logged {
     
     private void configureButtonBindings() {
         // configureDriverBindings(driver);
-        configureOperatorBindings(driver);
+        // configureOperatorBindings(operator);
+        configurePIDTunerBindings(driver);
     }
     
-    // TODO: uncomment these bindings (they are commented because we aren't testing them)
+    private void configurePIDTunerBindings(PatriBoxController controller) {
+        controller.povRight().onTrue(PIDTuner.incrementSubsystemCommand());
+        controller.povLeft().onTrue(PIDTuner.decreaseSubsystemCommand());
+        controller.rightBumper().onTrue(PIDTuner.PIDIncrementCommand());
+        controller.leftBumper().onTrue(PIDTuner.PIDDecreaseCommand());
+        controller.povUp().onTrue(PIDTuner.increaseCurrentPIDCommand(.1));
+        controller.povDown().onTrue(PIDTuner.decreaseCurrentPIDCommand(.1));
+        controller.a().onTrue(PIDTuner.logCommand());
+        controller.x().onTrue(PIDTuner.multiplyPIDCommand(2));
+        controller.b().onTrue(PIDTuner.multiplyPIDCommand(.5));
+    }
+  
+
     private void configureOperatorBindings(PatriBoxController controller) {
 
         controller.povUp().toggleOnTrue(climb.povUpCommand(swerve::getPose));
@@ -215,6 +244,69 @@ public class RobotContainer implements Logged {
 
         controller.a().onTrue(shooterCalc.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
         controller.a().onFalse(shooterCalc.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
+    }
+
+    private void configureCalibrationBindings(PatriBoxController controller) {
+        controller.leftBumper().onTrue(
+            calibrationControl.incrementLeftSpeed()
+        );
+        controller.back().onTrue(
+            calibrationControl.decrementLeftSpeed()
+        );
+
+        controller.rightBumper().onTrue(
+            calibrationControl.incrementRightSpeed()
+        );
+        controller.start().onTrue(
+            calibrationControl.decrementRightSpeed()
+        );
+
+        controller.leftY().whileTrue(
+            Math.signum(controller.getLeftY()) == -1.0 
+                ? calibrationControl.decrementBothSpeeds() 
+                : calibrationControl.incrementBothSpeeds()
+        );
+        controller.rightY().whileTrue(
+            Math.signum(controller.getRightY()) == -1.0 
+                ? calibrationControl.decrementAngle() 
+                : calibrationControl.incrementAngle()
+        );
+
+
+        controller.povDown().onTrue(
+            calibrationControl.logAll()
+        );
+
+        controller.y().toggleOnTrue(
+            calibrationControl.lockBothSpeeds()
+        ).toggleOnFalse(
+            calibrationControl.unlockBothSpeeds()
+        );
+
+        controller.x().toggleOnTrue(
+            calibrationControl.lockLeftSpeed()
+        ).toggleOnFalse(
+            calibrationControl.unlockLeftSpeed()
+        );
+
+        controller.b().toggleOnTrue(
+            calibrationControl.lockRightSpeed()
+        ).toggleOnFalse(
+            calibrationControl.unlockRightSpeed()
+        );
+
+        controller.a().toggleOnTrue(
+            calibrationControl.lockPivotAngle()
+        ).toggleOnFalse(
+            calibrationControl.unlockPivotAngle()
+        );
+
+        controller.povLeft().onTrue(
+            calibrationControl.decreaseDistance()
+        );
+        controller.povRight().onTrue(
+            calibrationControl.increaseDistance()
+        );
     }
     
     public Command getAutonomousCommand() {

@@ -27,6 +27,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
+import monologue.Logged;
+import monologue.Annotations.Log;
 
 /**
  * Welcome to the home of the many many variables :D
@@ -96,6 +98,16 @@ public final class Constants {
         public static final boolean GYRO_REVERSED = true;
     }
 
+
+    public static final class TuningConstants implements Logged {
+        public final int DRIVE_INDEX = 0;
+        public final int PIVOT_INDEX = 1;
+        public final int SHOOTER_INDEX = 2;
+        public final int ELEVATOR_INDEX = 3;
+        public final int CLIMB_INDEX = 4;
+
+    }
+
     public static final class ShooterConstants {
         public static final int LEFT_SHOOTER_CAN_ID = 11;
         public static final int RIGHT_SHOOTER_CAN_ID = 12;
@@ -105,12 +117,13 @@ public final class Constants {
         // degrees
         public static final double PIVOT_POSITION_CONVERSION_FACTOR = 360;
 
-        public static final double SHOOTER_P = 0.3;
+        public static final double SHOOTER_P = .1;
         public static final double SHOOTER_I = 0;
         public static final double SHOOTER_D = 0;
 
+
         // TODO: tune pid further
-        public static final double PIVOT_P = 0.05;
+        public static final double PIVOT_P = 0.1;
         public static final double PIVOT_I = 0;
         public static final double PIVOT_D = 0.002;
 
@@ -132,7 +145,7 @@ public final class Constants {
         public static final double PIVOT_LOWER_LIMIT_DEGREES_WRONG = 343.5;
         public static final double PIVOT_UPPER_LIMIT_DEGREES_WRONG = 300;
 
-        public static final double PIVOT_LOWER_LIMIT_DEGREES = 43;
+        public static final double PIVOT_LOWER_LIMIT_DEGREES = 17;
         public static final double PIVOT_UPPER_LIMIT_DEGREES = 60;
 
         public static final double SHOOTER_RPM_LOWER_LIMIT = -NeoMotorConstants.NEO_FREE_SPEED_RPM;
@@ -356,9 +369,11 @@ public final class Constants {
 
         public static final int DRIVER_CONTROLLER_PORT = 0;
         public static final int OPERATOR_CONTROLLER_PORT = 1;
+        public static final int PID_TUNER_CONTROLLER_PORT = 2;
 
         public static final double DRIVER_DEADBAND = 0.15;
         public static final double OPERATOR_DEADBAND = 0.15;
+        public static final double PID_TUNER_DEADBAND = 0.15;
 
         // See https://www.desmos.com/calculator/e07raajzh5
         // And
@@ -598,5 +613,7 @@ public final class Constants {
     }
 
     public static final double GRAVITY = 9.8;
+
+    public static final long LIMELIGHT_MAX_UPDATE_TIME = 200_000; // Micro Seconds = 0.2 Seconds
 
 }

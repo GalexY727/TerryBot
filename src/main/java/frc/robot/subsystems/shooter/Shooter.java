@@ -6,11 +6,25 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.Neo;
 import frc.robot.util.Constants.ShooterConstants;
+import frc.robot.util.PIDNotConstants;
+import monologue.Logged;
+import monologue.Annotations.Log;
 
-public class Shooter extends SubsystemBase {
+public class Shooter extends SubsystemBase implements Logged{
     /** Creates a new shooter. */
     private final Neo motorLeft;
     private final Neo motorRight;
+
+    public final PIDNotConstants shooterPID;
+    @Log
+    private double targetLeftSpeed = 0;
+    @Log
+    private double targetRightSpeed = 0;
+
+    @Log
+    private double currentLeftSpeed = 0;
+    @Log
+    private double currentRightSpeed = 0;
 
     public Shooter() {
 
@@ -18,7 +32,7 @@ public class Shooter extends SubsystemBase {
         motorRight = new Neo(ShooterConstants.RIGHT_SHOOTER_CAN_ID, true);
 
         configMotors();
-
+        shooterPID = new PIDNotConstants(motorLeft.getPID(), motorLeft.getPIDController());
     }
 
     public void configMotors() {
@@ -41,8 +55,13 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
+        shooterPID.updatePID();
+        motorRight.setPID(shooterPID.getPID());
+        currentLeftSpeed = motorLeft.getVelocity();
+        currentRightSpeed = motorRight.getVelocity();
     }
+
+    
 
     /**
      * The function sets both of the motors to a targetVelocity that is
@@ -53,11 +72,15 @@ public class Shooter extends SubsystemBase {
     public void setSpeed(double speed) {
         motorLeft.setTargetVelocity(speed);
         motorRight.setTargetVelocity(speed);
+        targetLeftSpeed = speed;
+        targetRightSpeed = speed;
     }
 
     public void setSpeed(Pair<Double, Double> speeds) {
         motorLeft.setTargetVelocity(speeds.getFirst());
         motorRight.setTargetVelocity(speeds.getSecond());
+        targetLeftSpeed = speeds.getFirst();
+        targetRightSpeed = speeds.getSecond();
     }
 
     /**
@@ -87,5 +110,9 @@ public class Shooter extends SubsystemBase {
      */
     public Command stop() {
         return Commands.runOnce(() -> motorLeft.stopMotor());
+    }
+
+    public PIDNotConstants getPIDNotConstants() {
+        return this.shooterPID;
     }
 }

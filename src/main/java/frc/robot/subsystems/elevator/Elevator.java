@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 import frc.robot.util.Neo;
 import frc.robot.util.Constants.ClimbConstants;
+import frc.robot.util.PIDNotConstants;
 import frc.robot.util.Constants.NTConstants;
 import frc.robot.util.Constants.TrapConstants;
 import monologue.Logged;
@@ -20,7 +21,7 @@ import monologue.Annotations.Log;
 
 public class Elevator extends SubsystemBase implements Logged {
     private final Neo elevator;
-
+    private final PIDNotConstants elevatorPID;
     @Log
     public double pos = 0, desiredPos = 0;
 
@@ -31,6 +32,7 @@ public class Elevator extends SubsystemBase implements Logged {
     public Elevator() {
         elevator = new Neo(TrapConstants.ELEVATOR_CAN_ID);
         configMotors();
+        elevatorPID = new PIDNotConstants(elevator.getPID(), elevator.getPIDController());
     }
 
     public void configMotors() {
@@ -58,6 +60,7 @@ public class Elevator extends SubsystemBase implements Logged {
             0, 0, elevator.getPosition(),
             new Rotation3d()
         );
+        elevatorPID.updatePID();
     }
 
     public double getPosition() {
@@ -111,7 +114,7 @@ public class Elevator extends SubsystemBase implements Logged {
     public Command stop() {
         return runOnce(() -> elevator.stopMotor());
     }
-
+    
     public BooleanSupplier atDesiredPosition() {
 		return () -> (
             MathUtil.applyDeadband(
@@ -119,4 +122,8 @@ public class Elevator extends SubsystemBase implements Logged {
 						elevator.getPosition() - elevator.getTargetPosition()),
 				TrapConstants.ELEVATOR_DEADBAND) == 0);
 	}
+
+    public PIDNotConstants getPIDNotConstants() {
+        return this.elevatorPID;
+    }
 }
