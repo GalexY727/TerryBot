@@ -67,7 +67,6 @@ public class RobotContainer implements Logged {
         
         driver = new PatriBoxController(OIConstants.DRIVER_CONTROLLER_PORT, OIConstants.DRIVER_DEADBAND);
         operator = new PatriBoxController(OIConstants.OPERATOR_CONTROLLER_PORT, OIConstants.OPERATOR_DEADBAND);
-        DriverStation.silenceJoystickConnectionWarning(true);
         
         limelight = new Limelight();
         intake = new Intake();
@@ -137,8 +136,8 @@ public class RobotContainer implements Logged {
     
     private void configureButtonBindings() {
         // configureDriverBindings(driver);
-        // configureOperatorBindings(operator);
-        configurePIDTunerBindings(driver);
+        configureOperatorBindings(driver);
+        // configurePIDTunerBindings(driver);
     }
     
     private void configurePIDTunerBindings(PatriBoxController controller) {
@@ -146,8 +145,8 @@ public class RobotContainer implements Logged {
         controller.povLeft().onTrue(PIDTuner.decreaseSubsystemCommand());
         controller.rightBumper().onTrue(PIDTuner.PIDIncrementCommand());
         controller.leftBumper().onTrue(PIDTuner.PIDDecreaseCommand());
-        controller.povUp().onTrue(PIDTuner.increaseCurrentPIDCommand(.1));
-        controller.povDown().onTrue(PIDTuner.decreaseCurrentPIDCommand(.1));
+        controller.povUp().onTrue(PIDTuner.increaseCurrentPIDCommand(.001));
+        controller.povDown().onTrue(PIDTuner.decreaseCurrentPIDCommand(.001));
         controller.a().onTrue(PIDTuner.logCommand());
         controller.x().onTrue(PIDTuner.multiplyPIDCommand(2));
         controller.b().onTrue(PIDTuner.multiplyPIDCommand(.5));
@@ -155,7 +154,7 @@ public class RobotContainer implements Logged {
   
 
     private void configureOperatorBindings(PatriBoxController controller) {
-
+        controller.b().onTrue(shooterCalc.stopPivotShooter().alongWith(pieceControl.stopAllMotors()));
         controller.povUp().toggleOnTrue(climb.povUpCommand(swerve::getPose));
         
         controller.povDown().onTrue(climb.toBottomCommand());
@@ -174,8 +173,21 @@ public class RobotContainer implements Logged {
             .toggleOnTrue(shooterCalc.prepareSWDCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
 
         controller.start().or(controller.back())
-            .onTrue(Commands.runOnce(() -> swerve.resetOdometry(new Pose2d(3,6.6, new Rotation2d()))));
+            .onTrue(Commands.runOnce(() -> swerve.resetOdometry(new Pose2d(1.332, 5.587, Rotation2d.fromDegrees(180)))));
         
+        controller.rightStick()
+            .toggleOnTrue(
+                Commands.sequence(
+                swerve.resetHDC(),
+                swerve.getDriveCommand(
+                    () -> {
+                        ;
+                        return new ChassisSpeeds(
+                            controller.getLeftY(),
+                            controller.getLeftX(),
+                            swerve.getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
+                    },
+                    () -> true)));
         // controller.rightBumper()
         //     .and(controller.leftBumper().negate())
         //     .onTrue(pieceControl.noteToTarget(() -> true));
@@ -199,18 +211,19 @@ public class RobotContainer implements Logged {
         // Upon hitting start or back,
         // reset the orientation of the robot
         // to be facing away from the driver station
-        controller.start().or(controller.back()).onTrue(
-            Commands.runOnce(() -> swerve.resetOdometry(
-                new Pose2d(
-                    swerve.getPose().getTranslation(),
-                    Rotation2d.fromDegrees(
-                        Robot.isRedAlliance()
-                            ? 0
-                            : 180))), 
-                swerve));
+        // controller.start().or(controller.back()).onTrue(
+        //     Commands.runOnce(() -> swerve.resetOdometry(
+        //         new Pose2d(
+        //             swerve.getPose().getTranslation(),
+        //             Rotation2d.fromDegrees(
+        //                 Robot.isRedAlliance()
+        //                     ? 180
+        //                     : 0))), 
+        //         swerve));
 
         controller.b()
             .whileTrue(Commands.runOnce(swerve::getSetWheelsX));
+        
         
         controller.leftStick()
             .toggleOnTrue(swerve.toggleSpeed());
@@ -314,7 +327,7 @@ public class RobotContainer implements Logged {
     }
     
     public void onDisabled() {
-    }
+            }
     
     public void onEnabled() {
     }

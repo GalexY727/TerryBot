@@ -39,7 +39,7 @@ public class Pivot extends SubsystemBase implements Logged {
 		this.pivotEncoder = pivot.getAbsoluteEncoder(Type.kDutyCycle);
 		this.pivotPIDController = pivot.getPIDController();
 		configMotor();
-        pivotPID = new PIDNotConstants(pivot.getPID(), pivot.getPIDController());
+        pivotPID = new PIDNotConstants(ShooterConstants.PIVOT_PID, pivot.getPIDController());
 	}
 
 	public void configMotor() {
@@ -50,15 +50,9 @@ public class Pivot extends SubsystemBase implements Logged {
 		pivotEncoder.setPositionConversionFactor(ShooterConstants.PIVOT_POSITION_CONVERSION_FACTOR);
 
 		pivot.setPID(
-				ShooterConstants.PIVOT_P,
-				ShooterConstants.PIVOT_I,
-				ShooterConstants.PIVOT_D,
-				ShooterConstants.PIVOT_MIN_OUTPUT,
-				ShooterConstants.PIVOT_MAX_OUTPUT);
-
-		// sets brake mode
-        
-		pivot.setBrakeMode();
+            ShooterConstants.PIVOT_PID,
+            ShooterConstants.PIVOT_MIN_OUTPUT,
+            ShooterConstants.PIVOT_MAX_OUTPUT);
 	}
 
 	@Override
@@ -69,7 +63,7 @@ public class Pivot extends SubsystemBase implements Logged {
                 realAngle += (desiredAngle - realAngle) / 10;
             }
         } else {
-            realAngle = getAngle();
+            realAngle = -getAngle();
         }
 
 		atDesiredAngle = atDesiredAngle().getAsBoolean();
@@ -78,9 +72,8 @@ public class Pivot extends SubsystemBase implements Logged {
 			NTConstants.PIVOT_OFFSET_METERS.getX(),
 			0,
 			NTConstants.PIVOT_OFFSET_METERS.getZ(),
-			new Rotation3d(0, Units.degreesToRadians(getAngle()), 0)
+			new Rotation3d(0, Units.degreesToRadians(realAngle), 0)
 		);
-        pivotPID.updatePID();
 	}
 
 	/**
@@ -133,7 +126,7 @@ public class Pivot extends SubsystemBase implements Logged {
 	 * @return The method is returning a Command object.
 	 */
 	public Command stop() {
-		return runOnce(() -> pivot.stopMotor());
+		return runOnce(() -> pivot.set(0));
 	}
 
 	/**
