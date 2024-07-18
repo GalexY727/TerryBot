@@ -106,7 +106,7 @@ public class RobotContainer implements Logged {
             // If the result of the estimatedRobotPose exists,
             // and the skew of the tag is less than 3 degrees,
             // then we can confirm that the estimated position is realistic
-            if (driver.rightTrigger().getAsBoolean() && result.valid) {
+            if (driver.rightTrigger().getAsBoolean() && !(result.botpose[0] == 0 && result.botpose[1] == 0) ) {
                 swerve.getPoseEstimator().addVisionMeasurement( 
                     result.getBotPose2d_wpiBlue(),
                     Robot.currentTimestamp - limelight.getLatencyDiffSeconds());
@@ -120,7 +120,7 @@ public class RobotContainer implements Logged {
             () -> -driver.getRightX(),
             () -> !driver.y().getAsBoolean(),
             () -> (driver.y().getAsBoolean()
-                && Robot.isBlueAlliance())));
+                && Robot.isRedAlliance())));
               
         configureButtonBindings();
         
@@ -132,7 +132,7 @@ public class RobotContainer implements Logged {
         // configureDriverBindings(driver);
         configureOperatorBindings(driver);
         // configurePIDTunerBindings(driver);
-        configureCalibrationBindings(driver);
+        configureCalibrationBindings(operator);
     }
     
     private void configurePIDTunerBindings(PatriBoxController controller) {
@@ -176,7 +176,6 @@ public class RobotContainer implements Logged {
                 swerve.resetHDC(),
                 swerve.getDriveCommand(
                     () -> {
-                        ;
                         return new ChassisSpeeds(
                             controller.getLeftY(),
                             controller.getLeftX(),
@@ -242,10 +241,9 @@ public class RobotContainer implements Logged {
                 swerve.resetHDC(),
                 swerve.getDriveCommand(
                     () -> {
-                        ;
                         return new ChassisSpeeds(
-                            -controller.getLeftY(),
-                            -controller.getLeftX(),
+                            controller.getLeftY(),
+                            controller.getLeftX(),
                             swerve.getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
                     },
                     () -> true)));
@@ -273,6 +271,15 @@ public class RobotContainer implements Logged {
         controller.x().onTrue(calibrationControl.toggleLeftLock());
         controller.b().onTrue(calibrationControl.toggleRightLock());
         controller.y().onTrue(calibrationControl.togglePivotLock());
+
+        controller.povLeft()
+            .onTrue(pieceControl.noteToTrap());
+
+        controller.povRight()
+            .onTrue(pieceControl.ejectNote());
+
+        controller.povDown()
+            .onTrue(pieceControl.stopIntakeAndIndexer());
     }
     
     public Command getAutonomousCommand() {
