@@ -48,7 +48,7 @@ public class Robot extends TimedRobot {
         DataLogManager.logNetworkTables(true);
         DriverStation.startDataLog(DataLogManager.getLog(), true);
         DriverStation.silenceJoystickConnectionWarning(true);
-        URCL.start();
+        // URCL.start();
 }
     /**
      * This function is called every 20 ms, no matter the mode. Used for items like
@@ -138,6 +138,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testExit() {
+        // Switch back to the normal button loop!
+        CommandScheduler.getInstance().setActiveButtonLoop(CommandScheduler.getInstance().getDefaultButtonLoop());
     }
 
     @Override

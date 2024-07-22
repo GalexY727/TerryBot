@@ -9,8 +9,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.commands.Drive;
 import frc.robot.commands.DriveHDC;
 import frc.robot.commands.PieceControl;
 import frc.robot.commands.ShooterCalc;
@@ -34,6 +37,8 @@ import frc.robot.util.PIDTunerCommands;
 import monologue.Logged;
 
 public class RobotContainer implements Logged {
+
+    private EventLoop testButtonBindingLoop = new EventLoop();
     
     private final PatriBoxController driver;
     private final PatriBoxController operator;
@@ -94,7 +99,7 @@ public class RobotContainer implements Logged {
         PIDTuner = new PIDTunerCommands(new PIDNotConstants[] {
             pivot.getPIDNotConstants(),
             shooter.getPIDNotConstants(),
-            elevator.getPIDNotConstants(),
+           elevator.getPIDNotConstants(),
             climb.getPidNotConstants()
         });
 
@@ -115,22 +120,27 @@ public class RobotContainer implements Logged {
             // If the result of the estimatedRobotPose exists,
             // and the skew of the tag is less than 3 degrees,
             // then we can confirm that the estimated position is realistic
-            if (driver.getHID().getRightTriggerAxis() > 0 && !(result.botpose[0] == 0 && result.botpose[1] == 0) ) {
+            if ( // check validity
+                ((driver.getHID().getRightTriggerAxis() > 0 && !(result.botpose[0] == 0 && result.botpose[1] == 0) )
+                // check if good tag
+                && (LimelightHelpers.getTA("limelight") >= 0.3 
+                    || result.targets_Fiducials.length > 1 && LimelightHelpers.getTA("limelight") > 0.4))
+                && limelight.getRobotPoseTargetSpace().getTranslation().getNorm() < 3.25
+            ) {
                 swerve.getPoseEstimator().addVisionMeasurement( 
                     result.getBotPose2d_wpiBlue(),
                     Robot.currentTimestamp - limelight.getLatencyDiffSeconds());
             }
         }, limelight));
 
-        swerve.setDefaultCommand(new DriveHDC(
+        swerve.setDefaultCommand(new Drive(
             swerve,
             driver::getLeftY,
             driver::getLeftX,
             () -> -driver.getRightX(),
             () -> !driver.getHID().getYButton(),
-            () -> (driver.getHID().getYButton()
-                && Robot.isRedAlliance()),
-            HDCTuner));
+            () -> !(driver.getHID().getYButton()
+                && Robot.isRedAlliance())));
               
         configureButtonBindings();
         
@@ -139,38 +149,19 @@ public class RobotContainer implements Logged {
     }
     
     private void configureButtonBindings() {
-        // configureDriverBindings(driver);
+        configureDriverBindings(operator);
         configureOperatorBindings(driver);
-        // configurePIDTunerBindings(driver);
-        // configureCalibrationBindings(operator);
-        configureHIDTuner(driver);
-    }
-    
-    private void configurePIDTunerBindings(PatriBoxController controller) {
-        controller.povRight().onTrue(PIDTuner.incrementSubsystemCommand());
-        controller.povLeft().onTrue(PIDTuner.decreaseSubsystemCommand());
-        controller.rightBumper().onTrue(PIDTuner.PIDIncrementCommand());
-        controller.leftBumper().onTrue(PIDTuner.PIDDecreaseCommand());
-        controller.povUp().onTrue(PIDTuner.increaseCurrentPIDCommand(.1));
-        controller.povDown().onTrue(PIDTuner.increaseCurrentPIDCommand(-.1));
-        controller.a().onTrue(PIDTuner.logCommand());
-        controller.x().onTrue(PIDTuner.multiplyPIDCommand(2));
-        controller.b().onTrue(PIDTuner.multiplyPIDCommand(.5));
-    }
-    
-    private void configureHIDTuner(PatriBoxController controller) {
-        controller.povRight().onTrue(HDCTuner.controllerIncrementCommand());
-        controller.povLeft().onTrue(HDCTuner.controllerDecrementCommand());
-        controller.rightBumper().onTrue(HDCTuner.constantIncrementCommand());
-        controller.leftBumper().onTrue(HDCTuner.constantDecrementCommand());
-        controller.povUp().onTrue(HDCTuner.increaseCurrentConstantCommand(.1));
-        controller.povDown().onTrue(HDCTuner.increaseCurrentConstantCommand(-.1));
-        controller.a().onTrue(HDCTuner.logCommand());
-        controller.x().onTrue(HDCTuner.multiplyPIDCommand(2));
-        controller.b().onTrue(HDCTuner.multiplyPIDCommand(.5));
-        
+        configureTestBindings();
     }
 
+    private void configureTestBindings() {
+        // Warning: these buttons are not on the default loop!
+        // See https://docs.wpilib.org/en/stable/docs/software/convenience-features/event-based.html
+        // for more information 
+        configurePIDTunerBindings(driver);
+        configureCalibrationBindings(operator);
+    }
+    
     private void configureOperatorBindings(PatriBoxController controller) {
         controller.b().onTrue(shooterCalc.stopAllMotors().alongWith(pieceControl.stopAllMotors()));
         controller.povUp().toggleOnTrue(climb.povUpCommand(swerve::getPose));
@@ -188,7 +179,7 @@ public class RobotContainer implements Logged {
             .onTrue(pieceControl.ejectNote());
 
         controller.a()
-            .toggleOnTrue(shooterCalc.prepareSWDCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
+            .toggleOnTrue(shooterCalc.prepareFireCommand(swerve::getPose));
 
         controller.start().or(controller.back())
             .onTrue(Commands.runOnce(() -> swerve.resetOdometry(new Pose2d(1.332, 5.587, Rotation2d.fromDegrees(180)))));
@@ -200,8 +191,8 @@ public class RobotContainer implements Logged {
                 swerve.getDriveCommand(
                     () -> {
                         return new ChassisSpeeds(
-                            controller.getLeftY(),
-                            controller.getLeftX(),
+                            -controller.getLeftY(),
+                            -controller.getLeftX(),
                             swerve.getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
                     },
                     () -> true)));
@@ -274,40 +265,44 @@ public class RobotContainer implements Logged {
         controller.a().onTrue(shooterCalc.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
         controller.a().onFalse(shooterCalc.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
     }
-
-    private void configureCalibrationBindings(PatriBoxController controller) {
-        controller.leftBumper().onTrue(pieceControl.stopAllMotors().alongWith(shooterCalc.stopAllMotors()));
-        controller.rightBumper().onTrue(calibrationControl.updateMotorsCommand());
-        controller.rightTrigger().onTrue(pieceControl.shootWhenReady(swerve::getPose, swerve::getRobotRelativeVelocity));
-
-        controller.leftY().whileTrue(calibrationControl.incrementSpeeds(() -> (int) (controller.getLeftY() * 5)));
-        controller.rightY().whileTrue(calibrationControl.incrementAngle(() -> -controller.getRightY()));
-
-        controller.leftX().whileTrue(calibrationControl.incrementLeftSpeed(() -> (int) (controller.getLeftX() * 5)));
-        controller.rightX().whileTrue(calibrationControl.incrementRightSpeed(() -> (int) (controller.getRightX() * 5)));
-
-        controller.back().onTrue(calibrationControl.incrementDistance(-1));
-        controller.start().onTrue(calibrationControl.incrementDistance(1));
-
-        controller.a().onTrue(calibrationControl.logTriplet());
-
-        controller.x().onTrue(calibrationControl.toggleLeftLock());
-        controller.b().onTrue(calibrationControl.toggleRightLock());
-        controller.y().onTrue(calibrationControl.togglePivotLock());
-
-        controller.povLeft()
-            .onTrue(pieceControl.noteToTrap());
-
-        controller.povRight()
-            .onTrue(pieceControl.ejectNote());
-
-        controller.povDown()
-            .onTrue(pieceControl.stopIntakeAndIndexer());
-
-        controller.povUp()
-            .onTrue(calibrationControl.copyCalcTriplet());
+    
+    private void configurePIDTunerBindings(PatriBoxController controller) {
+            
     }
     
+    private void configureCalibrationBindings(PatriBoxController controller) {
+        controller.leftBumper(testButtonBindingLoop).onTrue(pieceControl.stopAllMotors().alongWith(shooterCalc.stopAllMotors()));
+        controller.rightBumper(testButtonBindingLoop).onTrue(calibrationControl.updateMotorsCommand());
+        controller.rightTrigger(0.5, testButtonBindingLoop).onTrue(pieceControl.shootWhenReady(swerve::getPose, swerve::getRobotRelativeVelocity));
+
+        controller.leftY(0.3, testButtonBindingLoop).whileTrue(calibrationControl.incrementSpeeds(() -> (int) (controller.getLeftY() * 5)));
+        controller.rightY(0.3, testButtonBindingLoop).whileTrue(calibrationControl.incrementAngle(() -> -controller.getRightY()));
+
+        controller.leftX(0.3, testButtonBindingLoop).whileTrue(calibrationControl.incrementLeftSpeed(() -> (int) (controller.getLeftX() * 5)));
+        controller.rightX(0.3, testButtonBindingLoop).whileTrue(calibrationControl.incrementRightSpeed(() -> (int) (controller.getRightX() * 5)));
+
+        controller.back(testButtonBindingLoop).onTrue(calibrationControl.incrementDistance(-1));
+        controller.start(testButtonBindingLoop).onTrue(calibrationControl.incrementDistance(1));
+
+        controller.a(testButtonBindingLoop).onTrue(calibrationControl.logTriplet());
+
+        controller.x(testButtonBindingLoop).onTrue(calibrationControl.toggleLeftLock());
+        controller.b(testButtonBindingLoop).onTrue(calibrationControl.toggleRightLock());
+        controller.y(testButtonBindingLoop).onTrue(calibrationControl.togglePivotLock());
+
+        controller.pov(0, 270, testButtonBindingLoop)
+            .onTrue(pieceControl.noteToTrap());
+
+        controller.pov(0, 90, testButtonBindingLoop)
+            .onTrue(pieceControl.ejectNote());
+
+        controller.pov(0, 180, testButtonBindingLoop)
+            .onTrue(pieceControl.stopIntakeAndIndexer());
+
+        controller.pov(0, 0, testButtonBindingLoop)
+            .onTrue(calibrationControl.copyCalcTriplet());
+    }
+
     public Command getAutonomousCommand() {
         return Commands.none();
     }
@@ -317,22 +312,28 @@ public class RobotContainer implements Logged {
     
     public void onEnabled() {
     }
+
+    public void onTest() {
+        CommandScheduler.getInstance().setActiveButtonLoop(testButtonBindingLoop);
+        configurePIDTunerBindings(driver);
+        configureCalibrationBindings(operator);
+    }
     
     public void prepareNamedCommands() {
         // TODO: prepare to shoot while driving (w1 - c1)
         NamedCommands.registerCommand("intake", intake.inCommand());
         NamedCommands.registerCommand("shoot", pieceControl.noteToShoot());
         NamedCommands.registerCommand("placeAmp", pieceControl.noteToTarget(() -> true));
-        NamedCommands.registerCommand("prepareShooterL", shooterCalc.prepareFireCommand(() -> true, () -> FieldConstants.L_POSE));
-        NamedCommands.registerCommand("prepareShooterM", shooterCalc.prepareFireCommand(() -> true, () -> FieldConstants.M_POSE));
-        NamedCommands.registerCommand("prepareShooterR", shooterCalc.prepareFireCommand(() -> true, () -> FieldConstants.R_POSE));
+        NamedCommands.registerCommand("prepareShooterL", shooterCalc.prepareFireCommand(() -> FieldConstants.L_POSE));
+        NamedCommands.registerCommand("prepareShooterM", shooterCalc.prepareFireCommand(() -> FieldConstants.M_POSE));
+        NamedCommands.registerCommand("prepareShooterR", shooterCalc.prepareFireCommand(() -> FieldConstants.R_POSE));
     }
     
     private void incinerateMotors() {
-        Timer.delay(0.25);
+        Timer.delay(1);
         for (CANSparkBase neo : NeoMotorConstants.MOTOR_LIST) {
             neo.burnFlash();
-            Timer.delay(0.005);
+            Timer.delay(0.05);
         }
         Timer.delay(0.25);
     }
