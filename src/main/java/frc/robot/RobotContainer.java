@@ -267,6 +267,32 @@ public class RobotContainer implements Logged {
     }
     
     private void configurePIDTunerBindings(PatriBoxController controller) {
+        controller.pov(0, 270, testButtonBindingLoop)
+            .onTrue(PIDTuner.incrementSubsystemCommand());
+
+        controller.pov(0, 90, testButtonBindingLoop)
+            .onTrue(PIDTuner.decreaseSubsystemCommand());
+            
+        controller.pov(0, 180, testButtonBindingLoop)
+            .onTrue(PIDTuner.increaseCurrentPIDCommand(.1));
+            
+        controller.pov(0, 0, testButtonBindingLoop)
+            .onTrue(PIDTuner.increaseCurrentPIDCommand(-.1));
+            
+        controller.rightBumper(testButtonBindingLoop)
+            .onTrue(PIDTuner.PIDIncrementCommand());
+            
+        controller.leftBumper(testButtonBindingLoop)
+            .onTrue(PIDTuner.PIDDecreaseCommand());
+            
+        controller.a(testButtonBindingLoop)
+            .onTrue(PIDTuner.logCommand());
+            
+        controller.x(testButtonBindingLoop)
+            .onTrue(PIDTuner.multiplyPIDCommand(2));
+            
+        controller.b(testButtonBindingLoop)
+            .onTrue(PIDTuner.multiplyPIDCommand(.5));
             
     }
     
@@ -301,6 +327,27 @@ public class RobotContainer implements Logged {
 
         controller.pov(0, 0, testButtonBindingLoop)
             .onTrue(calibrationControl.copyCalcTriplet());
+    }
+    
+    private void configureHDCTuner(PatriBoxController controller) {
+        controller.pov(0, 270, testButtonBindingLoop)
+            .onTrue(HDCTuner.controllerDecrementCommand());
+        controller.pov(0, 90, testButtonBindingLoop)
+            .onTrue(HDCTuner.controllerIncrementCommand());
+        controller.pov(0, 180, testButtonBindingLoop)
+            .onTrue(HDCTuner.increaseCurrentConstantCommand(.1));
+        controller.pov(0, 0, testButtonBindingLoop)
+            .onTrue(HDCTuner.increaseCurrentConstantCommand(-.1));
+        controller.rightBumper(testButtonBindingLoop)
+            .onTrue(HDCTuner.constantIncrementCommand());
+        controller.leftBumper(testButtonBindingLoop)
+            .onTrue(HDCTuner.constantDecrementCommand());
+        controller.a(testButtonBindingLoop)
+            .onTrue(HDCTuner.logCommand());
+        controller.x(testButtonBindingLoop)
+            .onTrue(HDCTuner.multiplyPIDCommand(2));
+        controller.b(testButtonBindingLoop)
+            .onTrue(HDCTuner.multiplyPIDCommand(.5));
     }
 
     public Command getAutonomousCommand() {
