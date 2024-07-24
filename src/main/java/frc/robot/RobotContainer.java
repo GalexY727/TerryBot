@@ -110,11 +110,11 @@ public class RobotContainer implements Logged {
         });
 
         pieceControl = new PieceControl(
-                intake,
-                triggerWheel,
-                elevator,
-                claw,
-                shooterCalc);
+            intake,
+            triggerWheel,
+            elevator,
+            claw,
+            shooterCalc);
 
         calibrationControl = new CalibrationControl(shooterCalc);
 
@@ -150,16 +150,15 @@ public class RobotContainer implements Logged {
             driver::getLeftY,
             driver::getLeftX,
             () -> -driver.getRightX(),
-            () -> !driver.getHID().getYButton(),
-            () -> (driver.getHID().getYButton()
-                && Robot.isRedAlliance())));
-              
-        configureButtonBindings();
+            () -> !driver.getYButton(),
+            () -> (driver.getYButton()
+                && Robot.isBlueAlliance()))); 
         
+        configureButtonBindings();
         initializeArrays();
         
         pathPlannerStorage = new PathPlannerStorage(driver.y());
-        registerNamedCommands();
+        prepareNamedCommands();
         // choreoPathStorage = new ChoreoStorage(driver.y());
         // setupChoreoChooser();
         pathPlannerStorage.configureAutoChooser();
@@ -381,7 +380,25 @@ public class RobotContainer implements Logged {
     }
 
     public Command getAutonomousCommand() {
-        return Commands.none();
+        return driver.y().getAsBoolean() ? choreoChooser.getSelected() : pathPlannerStorage.getSelectedAuto();
+    }
+
+    @Log.NT
+    public static SendableChooser<Command> choreoChooser = new SendableChooser<>();
+    // PathPlannerPath starting = PathPlannerPath.fromChoreoTrajectory("S W3-1S C1");
+    private void setupChoreoChooser() {
+        // // TODO: Autos currently start at C1-5, we need to integrate the other paths
+        // // with the center line schenanigans to make full autos
+        // choreoChooser.setDefaultOption("Do Nothing", Commands.none());
+        // choreoChooser.addOption("W3-1 C1-5", 
+        //     swerve.resetOdometryCommand(
+        //         () -> starting.getPreviewStartingHolonomicPose()
+        //             .plus(new Transform2d(
+        //                     new Translation2d(), 
+        //                     Rotation2d.fromDegrees(180))))
+        //     .andThen(
+        //         AutoBuilder.followPath(starting)
+        //         .andThen(choreoPathStorage.generateCenterLineComplete(1, 5, false))));
     }
 
     public void onDisabled() {
@@ -399,13 +416,22 @@ public class RobotContainer implements Logged {
     
     public void prepareNamedCommands() {
         // TODO: prepare to shoot while driving (w1 - c1)
-        NamedCommands.registerCommand("intake", intake.inCommand());
-        NamedCommands.registerCommand("shoot", pieceControl.noteToShoot());
-        NamedCommands.registerCommand("placeAmp", pieceControl.noteToTarget(() -> true));
-        NamedCommands.registerCommand("prepareShooterL", shooterCalc.prepareFireCommand(() -> FieldConstants.L_POSE));
-        NamedCommands.registerCommand("prepareShooterM", shooterCalc.prepareFireCommand(() -> FieldConstants.M_POSE));
-        NamedCommands.registerCommand("prepareShooterR", shooterCalc.prepareFireCommand(() -> FieldConstants.R_POSE));
+        NamedCommands.registerCommand("Intake", pieceControl.noteToShoot());
+        NamedCommands.registerCommand("StopIntake", pieceControl.stopIntakeAndIndexer());
+        NamedCommands.registerCommand("Shoot", pieceControl.noteToShoot());
+        NamedCommands.registerCommand("PlaceAmp", pieceControl.noteToTarget());
+        NamedCommands.registerCommand("PrepareShooterL", shooterCalc.prepareFireCommand(() -> FieldConstants.L_POSE));
+        NamedCommands.registerCommand("PrepareShooterM", shooterCalc.prepareFireCommand(() -> FieldConstants.M_POSE));
+        NamedCommands.registerCommand("PrepareShooterR", shooterCalc.prepareFireCommand(() -> FieldConstants.R_POSE));
+        for (int i = 1; i <= FieldConstants.CENTER_NOTE_COUNT; i++) {
+            for (int j = 1; j <= FieldConstants.CENTER_NOTE_COUNT; j++) {
+                if (i == j) {
+                    continue;
+                }
+                NamedCommands.registerCommand("C" + i + "toC" + j, pathPlannerStorage.generateCenterLogic(i, j));
             }
+        }
+    }
     
     private void incinerateMotors() {
         Timer.delay(1);
