@@ -6,10 +6,12 @@ import com.revrobotics.CANSparkBase;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -17,6 +19,8 @@ import frc.robot.commands.Drive;
 import frc.robot.commands.DriveHDC;
 import frc.robot.commands.PieceControl;
 import frc.robot.commands.ShooterCalc;
+import frc.robot.commands.autonomous.ChoreoStorage;
+import frc.robot.commands.autonomous.PathPlannerStorage;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.elevator.Claw;
 import frc.robot.subsystems.elevator.Elevator;
@@ -56,6 +60,8 @@ public class RobotContainer implements Logged {
     private Elevator elevator;
     private ShooterCalc shooterCalc;
     private PieceControl pieceControl;
+    private ChoreoStorage choreoPathStorage;
+    private PathPlannerStorage pathPlannerStorage;
     private CalibrationControl calibrationControl;
     private PIDTunerCommands PIDTuner;
 
@@ -127,8 +133,14 @@ public class RobotContainer implements Logged {
                     || result.targets_Fiducials.length > 1 && LimelightHelpers.getTA("limelight") > 0.4))
                 && limelight.getRobotPoseTargetSpace().getTranslation().getNorm() < 3.25
             ) {
+                Pose2d estimatedRobotPose = result.getBotPose2d_wpiBlue();
+                if (Double.isNaN(estimatedRobotPose.getX()) 
+                    || Double.isNaN(estimatedRobotPose.getY()) 
+                    || Double.isNaN(estimatedRobotPose.getRotation().getRadians())) {
+                    return;
+                }
                 swerve.getPoseEstimator().addVisionMeasurement( 
-                    result.getBotPose2d_wpiBlue(),
+                    estimatedRobotPose,
                     Robot.currentTimestamp - limelight.getLatencyDiffSeconds());
             }
         }, limelight));
@@ -139,13 +151,18 @@ public class RobotContainer implements Logged {
             driver::getLeftX,
             () -> -driver.getRightX(),
             () -> !driver.getHID().getYButton(),
-            () -> !(driver.getHID().getYButton()
+            () -> (driver.getHID().getYButton()
                 && Robot.isRedAlliance())));
               
         configureButtonBindings();
         
-        prepareNamedCommands();
         initializeArrays();
+        
+        pathPlannerStorage = new PathPlannerStorage(driver.y());
+        registerNamedCommands();
+        // choreoPathStorage = new ChoreoStorage(driver.y());
+        // setupChoreoChooser();
+        pathPlannerStorage.configureAutoChooser();
     }
     
     private void configureButtonBindings() {
@@ -216,18 +233,31 @@ public class RobotContainer implements Logged {
     
     private void configureDriverBindings(PatriBoxController controller) {
         
-        // Upon hitting start or back,
+        // Upon hitting start button
         // reset the orientation of the robot
-        // to be facing away from the driver station
-        // controller.start().or(controller.back()).onTrue(
-        //     Commands.runOnce(() -> swerve.resetOdometry(
-        //         new Pose2d(
-        //             swerve.getPose().getTranslation(),
-        //             Rotation2d.fromDegrees(
-        //                 Robot.isRedAlliance()
-        //                     ? 180
-        //                     : 0))), 
-        //         swerve));
+        // to be facing AWAY FROM the driver station
+        controller.start().onTrue(
+            Commands.runOnce(() -> swerve.resetOdometry(
+                new Pose2d(
+                    swerve.getPose().getTranslation(),
+                    Rotation2d.fromDegrees(
+                        Robot.isRedAlliance()
+                            ? 0
+                            : 180))), 
+                swerve));
+
+        // Upon hitting start button
+        // reset the orientation of the robot
+        // to be facing TOWARDS the driver station
+        controller.back().onTrue(
+            Commands.runOnce(() -> swerve.resetOdometry(
+                new Pose2d(
+                    swerve.getPose().getTranslation(),
+                    Rotation2d.fromDegrees(
+                        Robot.isRedAlliance()
+                            ? 180
+                            : 0))), 
+                swerve));
 
         controller.b()
             .whileTrue(Commands.runOnce(swerve::getSetWheelsX));
@@ -353,8 +383,9 @@ public class RobotContainer implements Logged {
     public Command getAutonomousCommand() {
         return Commands.none();
     }
-    
+
     public void onDisabled() {
+        swerve.stopMotors();
     }
     
     public void onEnabled() {
@@ -374,7 +405,7 @@ public class RobotContainer implements Logged {
         NamedCommands.registerCommand("prepareShooterL", shooterCalc.prepareFireCommand(() -> FieldConstants.L_POSE));
         NamedCommands.registerCommand("prepareShooterM", shooterCalc.prepareFireCommand(() -> FieldConstants.M_POSE));
         NamedCommands.registerCommand("prepareShooterR", shooterCalc.prepareFireCommand(() -> FieldConstants.R_POSE));
-    }
+            }
     
     private void incinerateMotors() {
         Timer.delay(1);
@@ -407,4 +438,3 @@ public class RobotContainer implements Logged {
         }
     }
 }
-
