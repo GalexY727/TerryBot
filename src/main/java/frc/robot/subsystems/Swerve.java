@@ -128,10 +128,7 @@ public class Swerve extends SubsystemBase implements Logged {
                 this::getRobotRelativeVelocity,
                 this::drive,
                 AutoConstants.HPFC,
-                () -> {
-                    Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
-                    return alliance.isPresent() && alliance.get().equals(Alliance.Red);
-                },
+                Robot::isRedAlliance,
                 this);
 
         resetEncoders();
@@ -219,6 +216,10 @@ public class Swerve extends SubsystemBase implements Logged {
         setModuleStates(swerveModuleStates);
     }
 
+    public void stopMotors() {
+        drive(0, 0, 0, false);
+    }
+    
     @Log
     Pose2d desiredHDCPose = new Pose2d();
     public void setDesriredPose(Pose2d pose) {
@@ -264,10 +265,19 @@ public class Swerve extends SubsystemBase implements Logged {
     }
 
     public void resetOdometry(Pose2d pose) {
+
+        if (Double.isNaN(pose.getX()) || Double.isNaN(pose.getY()) || Double.isNaN(pose.getRotation().getRadians())) {
+            return;
+        }
+
         poseEstimator.resetPosition(
                 gyro.getRotation2d(),
                 getModulePositions(),
                 pose);
+    }
+
+    public Command resetOdometryCommand(Supplier<Pose2d> pose) {
+        return runOnce(() -> resetOdometry(pose.get()));
     }
 
     public SwerveModuleState[] getModuleStates() {
