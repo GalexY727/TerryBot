@@ -1,6 +1,6 @@
 {
     "name": "Tucker",
-    "sourceUrl": "",
+    "sourceUrl": "https://cad.onshape.com/documents/ab7d0f4e578b307a41018259/w/7e009c227068ad2be0d84d03/e/cb89ac97c5b305f92c28bb11",
     "rotations": [
       {
         "axis": "x",
@@ -132,10 +132,6 @@
           0,
           0
         ]
-      },
-      {
-        "zeroedRotations": [],
-        "zeroedPosition": []
       }
     ]
   }

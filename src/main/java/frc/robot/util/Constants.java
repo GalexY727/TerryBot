@@ -194,9 +194,9 @@ public final class Constants {
     }
 
     public static final class TrapConstants {
-        //public static final int ELEVATOR_CAN_ID = 14;
+        public static final int ELEVATOR_CAN_ID = 14;
         public static final int CLAW_CAN_ID = 15;
-        public static final double ELEVATOR_DEADBAND = .003;
+        public static final double ELEVATOR_DEADBAND = .05;
         public static final double OUTTAKE_SECONDS = 1;
         public static final double CLAW_POSITION_MULTIPLIER = 1.83;
 
@@ -314,18 +314,31 @@ public final class Constants {
             );
 
         public static final HolonomicPathFollowerConfig HPFC = new HolonomicPathFollowerConfig(
-                new PIDConstants(
-                        AutoConstants.XY_CORRECTION_P,
-                        AutoConstants.XY_CORRECTION_I,
-                        AutoConstants.XY_CORRECTION_D),
-                new PIDConstants(
-                        AutoConstants.ROTATION_CORRECTION_P,
-                        AutoConstants.ROTATION_CORRECTION_I,
-                        AutoConstants.ROTATION_CORRECTION_D),
-                MAX_SPEED_METERS_PER_SECOND,
-                Math.hypot(DriveConstants.WHEEL_BASE, DriveConstants.TRACK_WIDTH)/2.0,
-                new ReplanningConfig());
+            new PIDConstants(
+                AutoConstants.XY_CORRECTION_P,
+                AutoConstants.XY_CORRECTION_I,
+                AutoConstants.XY_CORRECTION_D),
+            new PIDConstants(
+                    AutoConstants.ROTATION_CORRECTION_P,
+                    AutoConstants.ROTATION_CORRECTION_I,
+                    AutoConstants.ROTATION_CORRECTION_D),
+            MAX_SPEED_METERS_PER_SECOND,
+            Math.hypot(DriveConstants.WHEEL_BASE, DriveConstants.TRACK_WIDTH)/2.0,
+            new ReplanningConfig());
 
+        // In choreo, there is one path, "C1-5S", 
+        // that shoots every piece.
+        // There is a setting that splits the trajectories
+        // by each stop point, and the auto generated
+        // name by default is (PATH_NAME + "." + index)
+        // so this represents that "." :>
+        private static final String PATH_EXTENSION = ".";
+
+        public static final String SHOOTING_DOWN_PATH_NAME = "C1-5S" + PATH_EXTENSION;
+        public static final String SHOOTING_UP_PATH_NAME   = "C5-1S" + PATH_EXTENSION;
+
+        public static final String SKIPPING_DOWN_PATH_NAME = "C1-5"  + PATH_EXTENSION;
+        public static final String SKIPPING_UP_PATH_NAME   = "C5-1"  + PATH_EXTENSION;
     }
 
     public static final class ModuleConstants {
@@ -487,6 +500,7 @@ public final class Constants {
     public static final class FieldConstants {
 
         public static boolean IS_SIMULATION = Robot.isSimulation();
+        public static final int CENTER_NOTE_COUNT = 5;
 
         public static final double ALIGNMENT_SPEED = 3;
         public static final double SNAP_TO_ANGLE_P = 0.0025;
@@ -668,5 +682,6 @@ public final class Constants {
     }
 
     public static final double GRAVITY = 9.8;
+    public static final long LIMELIGHT_MAX_UPDATE_TIME = 200_000;
 
 }
