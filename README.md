@@ -27,3 +27,7 @@ Auto paths are broken into components to be followed bit by bit, which means tha
 Just because we are on the move doesn't mean we have to miss!
 
 ![SWD GIF](https://github.com/user-attachments/assets/ca2406d5-9c1a-4eb1-b54f-1b7f455f1281)
+
+## Auto Alignment
+
+Using the position of the bot, we can auto-align to the various chains on the field to get keep the bot level when we lift ourselves!
