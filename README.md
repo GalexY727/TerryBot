@@ -31,3 +31,6 @@ Just because we are on the move doesn't mean we have to miss!
 ## Auto Alignment
 
 Using the position of the bot, we can auto-align to the various chains on the field to get keep the bot level when we lift ourselves!
+
+![Chain 1 gif](https://github.com/user-attachments/assets/6f61cfd5-f032-4379-8727-e0f9a5e9ac1f) ![Chain 2 gif](https://github.com/user-attachments/assets/052382e0-1697-45a2-8c82-6084b5204ba0)
+
