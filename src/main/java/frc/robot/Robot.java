@@ -21,6 +21,7 @@ import frc.robot.util.Constants.FieldConstants.GameMode;
 import frc.robot.util.Constants.NeoMotorConstants;
 import monologue.Monologue;
 
+
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to
@@ -39,6 +40,9 @@ public class Robot extends TimedRobot {
     public static double currentTimestamp = 0;
     public static double previousTimestamp = 0;
 
+    private static Alliance lastAlliance = 
+        (DriverStation.getAlliance().isPresent()) ? DriverStation.getAlliance().get() : Alliance.Blue;
+    
     @Override
     public void robotInit() {
         robotContainer = new RobotContainer();
@@ -67,6 +71,7 @@ public class Robot extends TimedRobot {
         Robot.previousTimestamp = Robot.currentTimestamp;
         Robot.currentTimestamp = Timer.getFPGATimestamp();
 
+        robotContainer.runActiveTraj();
     }
 
     @Override
@@ -81,6 +86,11 @@ public class Robot extends TimedRobot {
         // it needs to be updated.
         DriverStation.refreshData();
         FieldConstants.ALLIANCE = DriverStation.getAlliance();
+        
+        if (FieldConstants.ALLIANCE.get() != lastAlliance) {
+            allianceTrigger(robotContainer);
+        }
+        Robot.lastAlliance = FieldConstants.ALLIANCE.get();
     }
 
     @Override
@@ -158,6 +168,13 @@ public class Robot extends TimedRobot {
 
         for (Neo neo : NeoMotorConstants.MOTOR_LIST) {
             neo.tick();
+        }
+    }
+
+    public static void allianceTrigger(RobotContainer robotContainer) {
+        if (FieldConstants.ALLIANCE.get() != lastAlliance) {
+            System.out.println("Alliance Triggered");
+            robotContainer.updatePathViewer().run();
         }
     }
 

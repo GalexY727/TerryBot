@@ -35,9 +35,12 @@ import frc.robot.util.Constants.NeoMotorConstants;
 import frc.robot.util.Constants.OIConstants;
 import frc.robot.util.Constants.FieldConstants.GameMode;
 import monologue.Annotations.Log;
+import java.util.function.Supplier;
+import java.util.function.Consumer;
 import frc.robot.util.PIDNotConstants;
 import frc.robot.util.PIDTunerCommands;
 import monologue.Logged;
+import java.lang.System;
 
 public class RobotContainer implements Logged {
 
@@ -162,8 +165,27 @@ public class RobotContainer implements Logged {
         // choreoPathStorage = new ChoreoStorage(driver.y());
         // setupChoreoChooser();
         pathPlannerStorage.configureAutoChooser();
+        
+        pathPlannerStorage.bindListener(getUpdatePathViewer());
     }
-    
+
+    public Runnable updatePathViewer() {
+        return () -> {
+            swerve.getField2d().getObject("path")
+                .setPoses(shooterCalc.getAutoPoses(pathPlannerStorage.getSelectedAutoName()));
+        };
+    }
+
+    private Consumer<Command> getUpdatePathViewer() {
+        return (command) -> {
+            updatePathViewer().run();
+        };
+    }
+
+    public void runActiveTraj() {
+        shooterCalc.getActiveEndTraj();
+    }
+
     private void configureButtonBindings() {
         if (FieldConstants.IS_SIMULATION) {
             configureSimulationBindings(driver);
@@ -243,8 +265,10 @@ public class RobotContainer implements Logged {
         controller.a().whileTrue(
             Commands.sequence(
                 swerve.resetHDC(),
-                swerve.setAlignmentSpeed(),
-                swerve.ampAlignmentCommand(() -> driver.getLeftX())));
+                Commands.either(
+                    swerve.trapAlignmentCommand(() -> driver.getLeftY()), 
+                    swerve.ampAlignmentCommand(() -> driver.getLeftX()), 
+                    climb::hooksUp)));
         
         
         controller.rightTrigger()
@@ -253,18 +277,12 @@ public class RobotContainer implements Logged {
         controller.rightStick()
         // TODO: AIM AT CHAIN IF HOOKS UP
             .toggleOnTrue(
-                Commands.parallel(
-                    Commands.sequence(
-                        swerve.resetHDC(),
-                        swerve.getDriveCommand(
-                            () -> {
-                                return new ChassisSpeeds(
-                                    -controller.getLeftY(),
-                                    -controller.getLeftX(),
-                                    swerve.getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
-                            },
-                            () -> true
-                        )
+                Commands.sequence(
+                    swerve.resetHDC(),
+                    Commands.either(
+                        swerve.chainRotationalAlignment(() -> controller.getLeftX(), () -> controller.getLeftY()),
+                        swerve.speakerRotationalAlignment(() -> controller.getLeftX(), () -> controller.getLeftY(), shooterCalc),
+                        climb::hooksUp
                     )
                 )
             );

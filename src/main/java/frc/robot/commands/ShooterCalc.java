@@ -3,8 +3,9 @@ package frc.robot.commands;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.GeometryUtil;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -12,6 +13,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
@@ -23,6 +26,9 @@ import frc.robot.util.Constants.FieldConstants.GameMode;
 import monologue.Logged;
 import monologue.Annotations.Log;
 import frc.robot.util.SpeedAngleTriplet;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShooterCalc implements Logged {
 
@@ -77,6 +83,38 @@ public class ShooterCalc implements Logged {
                 }
             },
             pivot, shooter);
+    }
+
+    public Pose2d getPathEndPose(PathPlannerPath path) {
+        List<Pose2d> poses = path.getPathPoses();
+        Pose2d lastPose = poses.get(poses.size()-1);
+        return lastPose;
+    }
+
+    public List<Pose2d> getAutoPoses(String name) {
+        List<PathPlannerPath> paths = PathPlannerAuto.getPathGroupFromAutoFile(name);
+        List<Pose2d> autoPoses = new ArrayList<Pose2d>();
+        paths.forEach(path -> {
+            autoPoses.addAll(Robot.isRedAlliance() ? path.flipPath().getPathPoses() : path.getPathPoses());
+        });
+
+        return autoPoses;
+    }
+
+    @Log
+    Pose2d activeEndPose = new Pose2d();
+    public Translation2d getActiveEndTraj() {
+        double[] activeTraj = NetworkTableInstance.getDefault().getTable("PathPlanner").getEntry("activePath").getDoubleArray(new double[0]);
+        
+        if (activeTraj.length == 0) return new Translation2d(0, 0);
+
+        int activeTrajLength = activeTraj.length;
+        double endX = activeTraj[activeTrajLength - 3];
+        double endY = activeTraj[activeTrajLength - 2];
+        Translation2d endPose = new Translation2d(endX, endY);
+
+        activeEndPose = new Pose2d(endPose, new Rotation2d());
+        return endPose;
     }
 
     public Command prepareFireCommandAuto(Supplier<Pose2d> robotPose) {
