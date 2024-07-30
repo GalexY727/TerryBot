@@ -82,7 +82,69 @@ public class PatriSendableChooser<V> implements Sendable, AutoCloseable {
         m_map.put(name, object);
     }
 
+    /**
+     * Adds the given object to the list of options and marks it as the default.
+     * Functionally, this is
+     * very close to {@link #addOption(String, Object)} except that it will use this
+     * as the default
+     * option if none other is explicitly selected.
+     *
+     * @param name   the name of the option
+     * @param object the option
+     */
+    public void setDefaultOption(String name, V object) {
+        requireNonNullParam(name, "name", "setDefaultOption");
 
+        m_defaultChoice = name;
+        addOption(name, object);
+    }
+
+    /**
+     * Returns the selected option. If there is none selected, it will return the
+     * default. If there is
+     * none selected and no default, then it will return {@code null}.
+     *
+     * @return the option selected
+     */
+    public V getSelected() {
+        m_mutex.lock();
+        try {
+            if (m_selected != null) {
+                return m_map.get(m_selected);
+            } else {
+                return m_map.get(m_defaultChoice);
+            }
+        } finally {
+            m_mutex.unlock();
+        }
+    }
+
+    public String getSelectedName() {
+        m_mutex.lock();
+        try {
+            if (m_selected != null) {
+                return m_selected;
+            } else {
+                return m_defaultChoice;
+            }
+        } finally {
+            m_mutex.unlock();
+        }
+    }
+
+    /**
+     * Bind a listener that's called when the selected value changes. Only one
+     * listener can be bound.
+     * Calling this function will replace the previous listener.
+     *
+     * @param listener The function to call that accepts the new value
+     */
+    public void onChange(Consumer<V> listener) {
+        requireNonNullParam(listener, "listener", "onChange");
+        m_mutex.lock();
+        m_listener = listener;
+        m_mutex.unlock();
+    }
 
     private String m_selected;
     private final ReentrantLock m_mutex = new ReentrantLock();
