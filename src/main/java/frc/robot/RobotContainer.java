@@ -1,12 +1,10 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
-import com.revrobotics.CANSparkBase;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -30,6 +28,7 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.CalibrationControl;
 import frc.robot.util.HDCTuner;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.Neo;
 import frc.robot.util.PatriBoxController;
 import frc.robot.util.Constants.AutoConstants;
 import frc.robot.util.Constants.FieldConstants;
@@ -433,18 +432,15 @@ public class RobotContainer implements Logged {
                 if (i == j) {
                     continue;
                 }
-                NamedCommands.registerCommand("C" + i + "toC" + j, pathPlannerStorage.generateCenterLogic(i, j).asProxy());
+                NamedCommands.registerCommand("C" + i + "toC" + j, pathPlannerStorage.generateCenterLogic(i, j));
             }
         }
     }
     
     private void incinerateMotors() {
-        Timer.delay(1);
-        for (CANSparkBase neo : NeoMotorConstants.MOTOR_LIST) {
+        for (Neo neo : NeoMotorConstants.MOTOR_LIST) {
             neo.burnFlash();
-            Timer.delay(0.05);
         }
-        Timer.delay(0.25);
     }
 
     private void initializeArrays() {

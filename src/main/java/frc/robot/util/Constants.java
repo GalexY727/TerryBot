@@ -119,9 +119,9 @@ public final class Constants {
         public static final PatrIDConstants SHOOTER_PID = new PatrIDConstants(
             0.002,
             0,
-            0.20992
+            0.20992,
+            0.0001762
         );
-        public static final double SHOOTER_FF = 0.0001762;
 
         public static final PatrIDConstants PIVOT_PID = new PatrIDConstants(
             0.05,
@@ -143,9 +143,6 @@ public final class Constants {
 
         public static final double PIVOT_MIN_OUTPUT = -0.25;
         public static final double PIVOT_MAX_OUTPUT = 0.25;
-
-        public static final double PIVOT_LOWER_LIMIT_DEGREES_WRONG = 343.5;
-        public static final double PIVOT_UPPER_LIMIT_DEGREES_WRONG = 300;
 
         public static final double PIVOT_LOWER_LIMIT_DEGREES = 17;
         public static final double PIVOT_UPPER_LIMIT_DEGREES = 60;
@@ -716,8 +713,8 @@ public final class Constants {
         public static final int PIVOT_INDEX = 0;
         public static final int TRAPPER_INDEX = 1;
         public static final int ELEVATOR_INDEX = 2;
-        public static final int LEFT_CLIMB_INDEX = 4;
         public static final int RIGHT_CLIMB_INDEX = 3;
+        public static final int LEFT_CLIMB_INDEX = 4;
         
         public static final double PIVOT_OFFSET_X = 0.112;
         public static final double PIVOT_OFFSET_Z = 0.21;
