@@ -35,8 +35,8 @@ public class AlignmentCalc {
             ChassisSpeeds controllerSpeedsGet = controllerSpeeds.get();
             ChassisSpeeds autoSpeedsGet = autoSpeeds.get();
             return new ChassisSpeeds(
-                    -(controllerSpeedsGet.vxMetersPerSecond + autoSpeedsGet.vxMetersPerSecond),
-                    (controllerSpeedsGet.vyMetersPerSecond - autoSpeedsGet.vyMetersPerSecond),
+                    (controllerSpeedsGet.vxMetersPerSecond + autoSpeedsGet.vxMetersPerSecond),
+                    -(controllerSpeedsGet.vyMetersPerSecond + autoSpeedsGet.vyMetersPerSecond),
                     controllerSpeedsGet.omegaRadiansPerSecond + autoSpeedsGet.omegaRadiansPerSecond);
         }, () -> false);
     }
@@ -44,14 +44,45 @@ public class AlignmentCalc {
     public double getAlignmentSpeeds(Rotation2d desiredAngle) {
         return MathUtil.applyDeadband(AutoConstants.HDC.getThetaController().calculate(
             swerve.getPose().getRotation().getRadians(),
-            desiredAngle.getRadians()),  0);
+            desiredAngle.getRadians()),  0.02);
+    }
+
+    public ChassisSpeeds getAmpAlignmentSpeeds() {
+        Pose2d ampPose = FieldConstants.GET_AMP_POSITION();
+        Pose2d desiredPose = new Pose2d(
+            ampPose.getX(),
+            swerve.getPose().getY(),
+            ampPose.getRotation()
+        );
+        swerve.setDesiredPose(desiredPose);
+        return
+            AutoConstants.HDC.calculate(
+                swerve.getPose(),
+                desiredPose,
+                0,
+                desiredPose.getRotation()
+            );
+    }
+
+    public Command ampAlignmentCommand(DoubleSupplier driverX) {
+        return 
+            getAutoAlignmentCommand(
+                () -> getAmpAlignmentSpeeds(), 
+                () -> 
+                    ChassisSpeeds.fromFieldRelativeSpeeds(
+                        0,
+                        driverX.getAsDouble() * (Robot.isRedAlliance() ? 1 : -1),
+                        0,
+                        swerve.getPose().getRotation()
+                    )
+            );
     }
 
     public ChassisSpeeds getChainRotationalSpeeds(double driverX, double driverY) {
         Pose2d closestChain = PoseCalculations.getClosestChain(swerve.getPose());
         return new ChassisSpeeds(
-            driverY * (Robot.isRedAlliance() ? 1 : -1),
-            driverX * (Robot.isRedAlliance() ? 0 : 1),
+            driverY * (Robot.isRedAlliance() ? -1 : 1),
+            driverX * (Robot.isRedAlliance() ? -1 : 1),
             getAlignmentSpeeds(closestChain.getRotation())
         );
     }
@@ -69,19 +100,46 @@ public class AlignmentCalc {
         );
     }
 
+    public Command sourceRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY) {
+        return swerve.getDriveCommand(() -> getSourceRotationalSpeeds(driverX.getAsDouble(), driverY.getAsDouble()), () -> true);
+    }
+
+    public ChassisSpeeds getSpeakerRotationalSpeeds(double driverX, double driverY, ShooterCalc shooterCalc) {
+        return new ChassisSpeeds(
+            driverY * (Robot.isRedAlliance() ? -1 : 1),
+            driverX * (Robot.isRedAlliance() ? -1 : 1),
+            getAlignmentSpeeds(shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
+    }
+
+    public Command speakerRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY, ShooterCalc shooterCalc) {
+        return swerve.getDriveCommand(
+            () -> 
+                getSpeakerRotationalSpeeds(
+                    driverX.getAsDouble(), 
+                    driverY.getAsDouble(),
+                    shooterCalc), 
+            () -> true);
+    }
+
     public ChassisSpeeds getTrapAlignmentSpeeds() {
         Pose2d closestTrap = PoseCalculations.getClosestChain(swerve.getPose());
         Pose2d stage = FieldConstants.GET_STAGE_POSITION();
         double distance = swerve.getPose().relativeTo(stage).getTranslation().getNorm();
-        double x = stage.getX() - distance * closestTrap.getRotation().getCos();
-        double y = stage.getY() +distance * closestTrap.getRotation().getSin();
+        double x = stage.getX() + distance * closestTrap.getRotation().getCos();
+        double y = stage.getY() + distance * closestTrap.getRotation().getSin();
         Pose2d desiredPose = new Pose2d(
             x,
             y,
             closestTrap.getRotation()
         );
         swerve.setDesiredPose(desiredPose);
-        return AutoConstants.HDC.calculate(swerve.getPose(),desiredPose,0,desiredPose.getRotation());
+        return
+            AutoConstants.HDC.calculate(
+                swerve.getPose(),
+                desiredPose,
+                0,
+                desiredPose.getRotation()
+            );
     }
 
     public Command trapAlignmentCommand(DoubleSupplier driverY) {
@@ -90,9 +148,9 @@ public class AlignmentCalc {
                 () -> getTrapAlignmentSpeeds(), 
                 () -> 
                     ChassisSpeeds.fromFieldRelativeSpeeds(
-                        driverY.getAsDouble() * swerve.getPose().getRotation().getCos(),
-                        driverY.getAsDouble() * swerve.getPose().getRotation().getSin(),
-                        1.23,
+                        -driverY.getAsDouble() * swerve.getPose().getRotation().getCos(),
+                        -driverY.getAsDouble() * swerve.getPose().getRotation().getSin(),
+                        0,
                         swerve.getPose().getRotation()
                     )
             );
@@ -108,7 +166,7 @@ public class AlignmentCalc {
 
     public boolean onOppositeSide() {
         return Robot.isRedAlliance() 
-            ? swerve.getPose().getX() > FieldConstants.CENTERLINE_X 
-            : swerve.getPose().getX() < FieldConstants.CENTERLINE_X;
+            ? swerve.getPose().getX() < FieldConstants.CENTERLINE_X 
+            : swerve.getPose().getX() > FieldConstants.CENTERLINE_X;
     }
 }
