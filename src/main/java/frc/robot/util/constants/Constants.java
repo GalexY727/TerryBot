@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +26,8 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import frc.robot.Robot;
+import frc.robot.util.mod.SpeedAngleTriplet;
+import frc.robot.util.motors.Neo;
 import monologue.Logged;
 
 /**
@@ -389,7 +391,6 @@ public final class Constants {
             DRIVING_I,
             DRIVING_D,
             DRIVING_FF,
-            0,
             DRIVING_MIN_OUTPUT,
             DRIVING_MAX_OUTPUT
         );
@@ -405,7 +406,6 @@ public final class Constants {
             TURNING_I,
             TURNING_D,
             TURNING_FF,
-            0,
             TURNING_MIN_OUTPUT,
             TURNING_MAX_OUTPUT
         );

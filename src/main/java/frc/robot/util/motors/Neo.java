@@ -1,20 +1,21 @@
 // Developed in tandem with Reza from Team Spyder (1622)
 
-package frc.robot.util;
+package frc.robot.util.motors;
 
 import com.revrobotics.CANSparkLowLevel;
 import com.revrobotics.REVPhysicsSim;
 import com.revrobotics.SparkPIDController.ArbFFUnits;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.util.Constants.FieldConstants;
-import frc.robot.util.Constants.NeoMotorConstants;
+import frc.robot.util.constants.PatrIDConstants;
+import frc.robot.util.constants.Constants.FieldConstants;
+import frc.robot.util.constants.Constants.NeoMotorConstants;
 
 /*
  * Some of this is adapted from 3005's 2022 Code
  * Original source published at https://github.com/FRC3005/Rapid-React-2022-Public/tree/d499655448ed592c85f9cfbbd78336d8841f46e2
  */
-public class Neo extends SafeSpark {
+public class Neo extends SafeSparkBase {
 
     private ControlLoopType controlType = ControlLoopType.PERCENT;
     private double targetPosition = 0;
@@ -329,6 +330,19 @@ public class Neo extends SafeSpark {
     }
 
     /**
+     * Sets the PID values and output limits for the Neo motor controller.
+     * 
+     * @param P          the proportional gain
+     * @param I          the integral gain
+     * @param D          the derivative gain
+     * @param minOutput  the minimum output value
+     * @param maxOutput  the maximum output value
+     */
+    public void setPID(double P, double I, double D, double minOutput, double maxOutput) {
+        setPID(new PatrIDConstants(P, I, D, minOutput, maxOutput));
+    }
+
+    /**
      * Sets the PID constants for the Neo motor controller.
      * 
      * @param constants the PID constants to set
@@ -348,31 +362,11 @@ public class Neo extends SafeSpark {
             constants.getP(), 
             constants.getI(), 
             constants.getD(), 
+            constants.getFF(),
             constants.getIZone(), 
             constants.getMinOutput(), 
             constants.getMaxOutput(), 
             slot
-        );
-    }
-
-    /**
-     * Sets the PID values and output limits for the Neo motor controller.
-     * 
-     * @param P          the proportional gain
-     * @param I          the integral gain
-     * @param D          the derivative gain
-     * @param minOutput  the minimum output value
-     * @param maxOutput  the maximum output value
-     */
-    public void setPID(double P, double I, double D, double minOutput, double maxOutput) {
-        setPID(
-            P, 
-            I, 
-            D, 
-            Double.POSITIVE_INFINITY, 
-            minOutput, 
-            maxOutput, 
-            0
         );
     }
 
@@ -386,10 +380,11 @@ public class Neo extends SafeSpark {
      * @param maxOutput  the maximum output value
      * @param slotID     the slot ID of the PID controller
      */
-    public void setPID(double P, double I, double D, double iZone, double minOutput, double maxOutput, int slotID) {
+    public void setPID(double P, double I, double D, double FF, double iZone, double minOutput, double maxOutput, int slotID) {
         super.setP(P, slotID);
         super.setI(I, slotID);
         super.setD(D, slotID);
+        super.setFF(FF, slotID);
         super.setIZone(iZone, slotID);
         super.setOutputRange(minOutput, maxOutput, slotID);
     }
