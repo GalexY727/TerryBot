@@ -1,4 +1,4 @@
-package frc.robot.commands;
+package frc.robot.commands.subsytemHelpers;
 
 import java.util.function.Supplier;
 
@@ -10,8 +10,8 @@ import frc.robot.subsystems.Indexer;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.elevator.Trapper;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.util.constants.SpeedAngleTriplet;
 import frc.robot.util.constants.Constants.TrapConstants;
-import frc.robot.util.mod.SpeedAngleTriplet;
 
 public class PieceControl {
 

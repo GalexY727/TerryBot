@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands.leds;
+package frc.robot.commands.misc.leds;
 
 import java.util.function.Supplier;
 
@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Robot;
 import frc.robot.Robot.GameMode;
 import frc.robot.commands.autonomous.PathPlannerStorage;
-import frc.robot.subsystems.LedStrip;
+import frc.robot.subsystems.misc.leds.LedStrip;
 import frc.robot.util.constants.Constants.LEDConstants;
 import frc.robot.util.mod.PatriBoxController;
 import monologue.Logged;
