@@ -147,6 +147,46 @@ public class SafeSpark extends CANSparkMax {
     }
 
     /**
+     * Invert the motor.
+     * 
+     * @param inverted to invert or not to invert, that is the question
+     * @return {@link REVLibError#kOk} if successful
+     */
+    public REVLibError invertMotor(boolean inverted) {
+        return applyParameter(
+                () -> {
+                    throwIfClosed();
+                    return REVLibError.fromInt(CANSparkMaxJNI.c_SparkMax_SetInverted(sparkMaxHandle, inverted));
+                },
+                () -> super.getInverted() == inverted,
+                "Set inverted failure!");
+    }
+
+    /**
+     * Invert the motor
+     * 
+     */
+    @Override
+    public void setInverted(boolean inverted) {
+        invertMotor(inverted);
+    }
+    
+    /**
+     * Set a Spark to follow another Spark
+     * 
+     * @param leader Spark to follow
+     * @param invert Set slave to output opposite of the master
+     * @return {@link REVLibError#kOk} if successful
+     */
+    public REVLibError follow(SafeSpark leader, boolean invert) {
+        REVLibError status = applyParameter(
+                () -> super.follow(ExternalFollower.kFollowerSpark, leader.canID, invert),
+                () -> super.isFollower(),
+                "Set motor master failure!");
+        return status;
+    }
+
+    /**
      * Set the conversion factor for position of the encoder. Multiplied by the
      * native output units to
      * give you position.
@@ -359,7 +399,7 @@ public class SafeSpark extends CANSparkMax {
      * @param slot Slot to set
      * @return {@link REVLibError#kOk} if successful
      */
-    public REVLibError setIzone(double value, int slot) {
+    public REVLibError setIZone(double value, int slot) {
         REVLibError status = applyParameter(
             () -> pidController.setIZone(value, slot),
             () -> pidController.getIZone(slot) == value,
@@ -451,46 +491,6 @@ public class SafeSpark extends CANSparkMax {
             () -> pidController.setPositionPIDWrappingEnabled(enabled),
             () -> pidController.getPositionPIDWrappingEnabled() == enabled,
             "Set PID wrapping enabled failure!");
-    }
-
-    /**
-     * Invert the motor.
-     * 
-     * @param inverted to invert or not to invert, that is the question
-     * @return {@link REVLibError#kOk} if successful
-     */
-    public REVLibError invertMotor(boolean inverted) {
-        return applyParameter(
-                () -> {
-                    throwIfClosed();
-                    return REVLibError.fromInt(CANSparkMaxJNI.c_SparkMax_SetInverted(sparkMaxHandle, inverted));
-                },
-                () -> super.getInverted() == inverted,
-                "Set inverted failure!");
-    }
-
-    /**
-     * Invert the motor
-     * 
-     */
-    @Override
-    public void setInverted(boolean inverted) {
-        invertMotor(inverted);
-    }
-    
-    /**
-     * Set a Spark to follow another Spark
-     * 
-     * @param leader Spark to follow
-     * @param invert Set slave to output opposite of the master
-     * @return {@link REVLibError#kOk} if successful
-     */
-    public REVLibError follow(SafeSpark leader, boolean invert) {
-        REVLibError status = applyParameter(
-                () -> super.follow(ExternalFollower.kFollowerSpark, leader.canID, invert),
-                () -> super.isFollower(),
-                "Set motor master failure!");
-        return status;
     }
 
     public REVLibError setPositionPIDWrappingBounds(double min, double max) {
