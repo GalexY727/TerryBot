@@ -1,44 +1,22 @@
-package frc.robot.commands;
-
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
+package frc.robot.util.calc;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
-import frc.robot.subsystems.Climb;
+import frc.robot.commands.ShooterCmds;
 import frc.robot.subsystems.Swerve;
-import frc.robot.util.calc.PoseCalculations;
 import frc.robot.util.constants.Constants.AutoConstants;
 import frc.robot.util.constants.Constants.FieldConstants;
 
 public class AlignmentCalc {
     
-    private Climb climb;
+
     private Swerve swerve;
-    private ShooterCmds shooterCmds;
 
-    public AlignmentCalc(Swerve swerve, Climb climb, ShooterCmds shooterCmds) {
-
-        this.climb = climb;
+    public AlignmentCalc(Swerve swerve) {
         this.swerve = swerve;
-        this.shooterCmds = shooterCmds;
-
-    }
-
-    public Command getAutoAlignmentCommand(Supplier<ChassisSpeeds> autoSpeeds, Supplier<ChassisSpeeds> controllerSpeeds) {
-        return swerve.getDriveCommand(() -> {
-            ChassisSpeeds controllerSpeedsGet = controllerSpeeds.get();
-            ChassisSpeeds autoSpeedsGet = autoSpeeds.get();
-            return new ChassisSpeeds(
-                    (controllerSpeedsGet.vxMetersPerSecond + autoSpeedsGet.vxMetersPerSecond),
-                    -(controllerSpeedsGet.vyMetersPerSecond + autoSpeedsGet.vyMetersPerSecond),
-                    controllerSpeedsGet.omegaRadiansPerSecond + autoSpeedsGet.omegaRadiansPerSecond);
-        }, () -> false);
     }
 
     public double getAlignmentSpeeds(Rotation2d desiredAngle) {
@@ -64,20 +42,6 @@ public class AlignmentCalc {
             );
     }
 
-    public Command ampAlignmentCommand(DoubleSupplier driverX) {
-        return 
-            getAutoAlignmentCommand(
-                () -> getAmpAlignmentSpeeds(), 
-                () -> 
-                    ChassisSpeeds.fromFieldRelativeSpeeds(
-                        0,
-                        driverX.getAsDouble() * (Robot.isRedAlliance() ? 1 : -1),
-                        0,
-                        swerve.getPose().getRotation()
-                    )
-            );
-    }
-
     public ChassisSpeeds getChainRotationalSpeeds(double driverX, double driverY) {
         Pose2d closestChain = PoseCalculations.getClosestChain(swerve.getPose());
         return new ChassisSpeeds(
@@ -85,10 +49,6 @@ public class AlignmentCalc {
             driverX * (Robot.isRedAlliance() ? -1 : 1),
             getAlignmentSpeeds(closestChain.getRotation())
         );
-    }
-
-    public Command chainRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY) {
-        return swerve.getDriveCommand(() -> getChainRotationalSpeeds(driverX.getAsDouble(), driverY.getAsDouble()), () -> true);
     }
 
     public ChassisSpeeds getSourceRotationalSpeeds(double driverX, double driverY) {
@@ -100,25 +60,11 @@ public class AlignmentCalc {
         );
     }
 
-    public Command sourceRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY) {
-        return swerve.getDriveCommand(() -> getSourceRotationalSpeeds(driverX.getAsDouble(), driverY.getAsDouble()), () -> true);
-    }
-
     public ChassisSpeeds getSpeakerRotationalSpeeds(double driverX, double driverY, ShooterCmds shooterCmds) {
         return new ChassisSpeeds(
             driverY * (Robot.isRedAlliance() ? -1 : 1),
             driverX * (Robot.isRedAlliance() ? -1 : 1),
             getAlignmentSpeeds(shooterCmds.shooterCalc.calculateSWDRobotAngleToSpeaker(swerve.getPose(), swerve.getFieldRelativeVelocity())));
-    }
-
-    public Command speakerRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY, ShooterCmds shooterCmds) {
-        return swerve.getDriveCommand(
-            () -> 
-                getSpeakerRotationalSpeeds(
-                    driverX.getAsDouble(), 
-                    driverY.getAsDouble(),
-                    shooterCmds), 
-            () -> true);
     }
 
     public ChassisSpeeds getTrapAlignmentSpeeds() {
@@ -140,28 +86,6 @@ public class AlignmentCalc {
                 0,
                 desiredPose.getRotation()
             );
-    }
-
-    public Command trapAlignmentCommand(DoubleSupplier driverY) {
-        return 
-            getAutoAlignmentCommand(
-                () -> getTrapAlignmentSpeeds(), 
-                () -> 
-                    ChassisSpeeds.fromFieldRelativeSpeeds(
-                        -driverY.getAsDouble() * swerve.getPose().getRotation().getCos(),
-                        -driverY.getAsDouble() * swerve.getPose().getRotation().getSin(),
-                        0,
-                        swerve.getPose().getRotation()
-                    )
-            );
-    }
-
-    public Command wingRotationalAlignment(DoubleSupplier driverX, DoubleSupplier driverY) {
-        return
-            Commands.either(
-                chainRotationalAlignment(driverX, driverY),
-                speakerRotationalAlignment(driverX, driverY, shooterCmds),
-                climb::hooksUp);
     }
 
     public boolean onOppositeSide() {
