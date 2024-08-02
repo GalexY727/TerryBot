@@ -1,4 +1,4 @@
-package frc.robot.commands.drive;
+package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -10,9 +10,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 //import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Swerve;
-import frc.robot.util.constants.Constants.AutoConstants;
-import frc.robot.util.constants.Constants.DriveConstants;
-import frc.robot.util.testing.HDCTuner;
+import frc.robot.util.HDCTuner;
+import frc.robot.util.Constants.AutoConstants;
+import frc.robot.util.Constants.DriveConstants;
 
 public class DriveHDC  extends Command {
 
@@ -72,12 +72,13 @@ public class DriveHDC  extends Command {
             y *= -1;
         }
 
-        // if (x == 0 && y == 0 && rotationSupplier.getAsDouble() == 0) {
-        //     swerve.drive(new ChassisSpeeds());
-        //     return;
-        // }
-
         ChassisSpeeds desiredSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(x, y, rotationSupplier.getAsDouble(), swerve.getPose().getRotation());
+
+        // If the desired pose is more than 2 meters away, reset it to the current pose
+        // This is to prevent the robot from chasing the sun
+        if (desiredPose.getTranslation().getDistance(swerve.getPose().getTranslation()) > 2) {
+            desiredPose = swerve.getPose();
+        }
 
         // integrate the speeds to positions with exp and twist
         desiredPose = desiredPose.exp(
@@ -87,6 +88,7 @@ public class DriveHDC  extends Command {
                 desiredSpeeds.omegaRadiansPerSecond * DriveConstants.MAX_SPEED_METERS_PER_SECOND * .015
             )
         );
+
 
         swerve.drive(
             AutoConstants.HDC.calculate(swerve.getPose(), desiredPose, 0, desiredPose.getRotation())

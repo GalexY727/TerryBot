@@ -1,20 +1,14 @@
-package frc.robot.util.calc;
+package frc.robot.util;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.util.constants.Constants.ClimbConstants;
-import frc.robot.util.constants.Constants.FieldConstants;
+import frc.robot.util.Constants.ClimbConstants;
+import frc.robot.util.Constants.FieldConstants;
 import monologue.Logged;
 
 public class PoseCalculations implements Logged {
 
-    /**
-     * Calculates the intercepts of the chain based on the given robot position.
-     * 
-     * @param position the robot's position
-     * @return a Pair containing the left and right intercepts of the chain
-     */
     public static Pair<Double, Double> getChainIntercepts(Pose2d position) {
         Pose2d closestChainPose = getClosestChain(position);
 
@@ -30,12 +24,6 @@ public class PoseCalculations implements Logged {
         return Pair.of(leftIntercept - 0.6, rightIntercept - 0.6);
     }
 
-    /**
-     * Calculates the closest chain position to a given pose.
-     *
-     * @param position The pose for which to find the closest chain position.
-     * @return The closest chain position to the given pose.
-     */
     public static Pose2d getClosestChain(Pose2d position) {
         Pose2d[] chainPoses = FieldConstants.GET_CHAIN_POSITIONS();
         Pose2d closestChain = chainPoses[0];

@@ -1,11 +1,10 @@
-package frc.robot.util.constants;
+package frc.robot.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -26,9 +25,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
-import frc.robot.util.motors.Neo;
 import monologue.Logged;
 
 /**
@@ -98,6 +95,7 @@ public final class Constants {
         public static final int PIGEON_CAN_ID = 29;
         public static final boolean GYRO_REVERSED = true;
     }
+
 
     public static final class TuningConstants implements Logged {
         public final int DRIVE_INDEX = 0;
@@ -257,7 +255,7 @@ public final class Constants {
 
         // The below values need to be tuned for each new robot.
         // They are currently set to the values suggested by Choreo
-        public static final double MAX_SPEED_METERS_PER_SECOND = 3;
+        public static final double MAX_SPEED_METERS_PER_SECOND = 7.20;
         public static final double MAX_ACCELERATION_METERS_PER_SECOND_SQUARED = 2.5;
         public static final double MAX_ANGULAR_SPEED_RADIANS_PER_SECOND = Math.PI/4.0;
         public static final double MAX_ANGULAR_SPEED_RADIANS_PER_SECOND_SQUARED = Math.PI;
@@ -273,7 +271,7 @@ public final class Constants {
          *   I: 1 (izone on 20 degrees)
          *   D: 0.0375
          */
-        public static final double XY_CORRECTION_P = 2;
+        public static final double XY_CORRECTION_P = 4;
         public static final double XY_CORRECTION_I = 0.0125;
         public static final double XY_CORRECTION_D = 0.0125;
 
@@ -282,7 +280,7 @@ public final class Constants {
                 AutoConstants.XY_CORRECTION_I,
                 AutoConstants.XY_CORRECTION_D);
 
-        public static final double ROTATION_CORRECTION_P = .725;
+        public static final double ROTATION_CORRECTION_P = .8514;
         public static final double ROTATION_CORRECTION_I = 1;
         public static final double ROTATION_CORRECTION_D = 0;
 
@@ -307,15 +305,16 @@ public final class Constants {
                 THETA_PID
             );
 
-        public static final HolonomicPathFollowerConfig HPFC = new HolonomicPathFollowerConfig(
+        public static HolonomicPathFollowerConfig HPFC = new HolonomicPathFollowerConfig(
             new PIDConstants(
-                AutoConstants.XY_CORRECTION_P*3,
-                0,
-                AutoConstants.XY_CORRECTION_D*2),
+                AutoConstants.XY_CORRECTION_P,
+                AutoConstants.XY_CORRECTION_I,
+                AutoConstants.XY_CORRECTION_D),
             new PIDConstants(
-                    AutoConstants.ROTATION_CORRECTION_P*3,
-                    0,
-                    AutoConstants.ROTATION_CORRECTION_D*2),
+                    AutoConstants.ROTATION_CORRECTION_P,
+                    1,
+                    AutoConstants.ROTATION_CORRECTION_D,
+                    Units.degreesToRadians(45)),
             MAX_SPEED_METERS_PER_SECOND,
             Math.hypot(DriveConstants.WHEEL_BASE, DriveConstants.TRACK_WIDTH)/2.0,
             new ReplanningConfig());
@@ -522,6 +521,7 @@ public final class Constants {
 
         public static final int HAS_PIECE_CURRENT_THRESHOLD = 20;
 
+        // TODO: Add these to the robot
         public static final int TRIGGER_WHEEL_CURRENT_LIMIT_AMPS = 30;
         public static final double SHOOTER_TRIGGER_WHEEL_PERCENT = -1;
         public static final double TRAP_TRIGGER_WHEEL_PERCENT = 1;
@@ -557,19 +557,19 @@ public final class Constants {
                 new Pose2d(5.875, 4.168, Rotation2d.fromDegrees(0)),
                 new Pose2d(4.353, 4.938, Rotation2d.fromDegrees(120)),
                 // Red Stage
-                GeometryUtil.flipFieldPose(new Pose2d(4.37, 3.201, Rotation2d.fromDegrees(-120))),
-                GeometryUtil.flipFieldPose(new Pose2d(5.875, 4.168, Rotation2d.fromDegrees(0))),
-                GeometryUtil.flipFieldPose(new Pose2d(4.353, 4.938, Rotation2d.fromDegrees(120))),
+                new Pose2d(12.07, 3.237, Rotation2d.fromDegrees(-60)),
+                new Pose2d(10.638, 4.204, Rotation2d.fromDegrees(180)),
+                new Pose2d(12.2, 5, Rotation2d.fromDegrees(60))
         };
 
         public static final Pose2d[] STAGE_POSITIONS = new Pose2d[] {
             new Pose2d(4.897, 4.064, new Rotation2d()),
-            GeometryUtil.flipFieldPose(new Pose2d(4.897, 4.064, new Rotation2d()))
+            new Pose2d(11.655, 4.064, new Rotation2d())
         };
 
         public static final Pose2d[] SOURCE_POSITIONS = new Pose2d[] {
             new Pose2d(15.452, 0.971, Rotation2d.fromDegrees(120)),
-            GeometryUtil.flipFieldPose(new Pose2d(15.452, 0.971, Rotation2d.fromDegrees(120)))
+            new Pose2d(1.079, 0.971, Rotation2d.fromDegrees(60))
         };
 
         public static final Pose3d[] CHAIN_POSE3DS = new Pose3d[] {
@@ -594,7 +594,7 @@ public final class Constants {
                 // Blue Speaker
                 new Pose2d(0, 5.547, Rotation2d.fromDegrees(0)),
                 // Red Speaker
-                GeometryUtil.flipFieldPose(new Pose2d(0, 5.547, Rotation2d.fromDegrees(0)))
+                new Pose2d(FIELD_WIDTH_METERS, 5.547, Rotation2d.fromDegrees(0)),
         };
 
         public static final double SPEAKER_HEIGHT = 2.08;
@@ -605,37 +605,27 @@ public final class Constants {
                 // Blue Amp
                 new Pose2d(1.827, FIELD_HEIGHT_METERS, Rotation2d.fromDegrees(-90)),
                 // Red Amp
-                GeometryUtil.flipFieldPose(new Pose2d(1.827, FIELD_HEIGHT_METERS, Rotation2d.fromDegrees(-90)))
+                new Pose2d(14.706, FIELD_HEIGHT_METERS, Rotation2d.fromDegrees(-90)),
         };
 
-        private static int getAllienceIndex() {
-            return getAllienceIndex(Alliance.Blue);
-        }
-
-        private static int getAllienceIndex(Alliance defaultAlliance) {
-            return defaultAlliance == Alliance.Blue 
-                ? (Robot.isRedAlliance() ? 1 : 0) 
-                : (Robot.isBlueAlliance() ? 1 : 0);
-        }
-
         public static Pose2d GET_SPEAKER_POSITION() {
-            return SPEAKER_POSITIONS[getAllienceIndex()];
+            return SPEAKER_POSITIONS[Robot.isRedAlliance() ? 1 : 0];
         }
 
         public static Pose2d GET_SOURCE_POSITION() {
-            return SOURCE_POSITIONS[getAllienceIndex()];
+            return SOURCE_POSITIONS[Robot.isRedAlliance() ? 1 : 0];
         }
 
         public static Translation2d GET_SPEAKER_TRANSLATION() {
-            return SPEAKER_POSITIONS[getAllienceIndex()].getTranslation();
+            return SPEAKER_POSITIONS[Robot.isRedAlliance() ? 1 : 0].getTranslation();
         }
 
         public static Pose2d GET_AMP_POSITION() {
-            return AMP_POSITIONS[getAllienceIndex()];
+            return AMP_POSITIONS[Robot.isRedAlliance() ? 1 : 0];
         }
 
         public static Pose2d GET_STAGE_POSITION() {
-            return STAGE_POSITIONS[getAllienceIndex()];
+            return STAGE_POSITIONS[Robot.isRedAlliance() ? 1 : 0];
         }
 
         public static Pose2d[] GET_CHAIN_POSITIONS() {
@@ -726,9 +716,8 @@ public final class Constants {
         public static final int RIGHT_CLIMB_INDEX = 3;
         public static final int LEFT_CLIMB_INDEX = 4;
         
-        public static final double PIVOT_OFFSET_X = 0.112;
-        public static final double PIVOT_OFFSET_Z = 0.21;
-
+        public static final double PIVOT_OFFSET_X = 0.165;
+        public static final double PIVOT_OFFSET_Z = 0.2095;
     
         public static final Translation3d PIVOT_OFFSET_METERS = new Translation3d(
             PIVOT_OFFSET_X,
