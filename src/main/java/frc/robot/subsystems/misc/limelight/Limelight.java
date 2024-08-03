@@ -115,6 +115,15 @@ public class Limelight extends SubsystemBase implements Logged{
         visableTags = knownFiducials.toArray(new Pose3d[0]);
     }
 
+    public Pose2d getNotePose2d() {
+        LimelightHelpers.setPipelineIndex(limelightName, 1);
+        Pose2d notePose = LimelightHelpers.getTargetPose3d_RobotSpace(limelightName).toPose2d();
+        // Pose2d robotPose = robotPoseSupplier.get();
+        double x = notePose.getX();
+        double y = notePose.getY();
+        return new Pose2d(x, y, new Rotation2d());
+    }
+
     public Pose2d getPose2d() {
         return LimelightHelpers.getBotPose2d_wpiBlue(limelightName);
     }
@@ -126,6 +135,7 @@ public class Limelight extends SubsystemBase implements Logged{
     public double getLatencyDiffSeconds() {
         return (LimelightHelpers.getLatency_Pipeline(limelightName)/1000d) - (LimelightHelpers.getLatency_Capture(limelightName)/1000d); 
     }
+
 
     // The below code is for simulation only
     // This has nothing to do with the actual limelight
