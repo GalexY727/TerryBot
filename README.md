@@ -36,6 +36,8 @@ Using the position of the bot, we can auto-align to the various chains on the fi
 
 ## Virtual Camera
 
-With some cool math, we can see where AprilTags would be on the field even if we are in sim! 
+With some cool math, we can see where AprilTags would be on the field even if we are in sim!
 
 This allows us to fine tune where the optimal camera position is for the bot so that we can see the most tags possible (for a kalman filter with main bot pose)
+
+![gif](https://github.com/user-attachments/assets/7294c0ba-c5e7-4006-956d-8f168cdf4720)
