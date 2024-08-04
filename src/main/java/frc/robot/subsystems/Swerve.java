@@ -10,12 +10,14 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -24,12 +26,14 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.event.NetworkBooleanEvent;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
+import frc.robot.commands.drive.ChasePose;
 import frc.robot.commands.drive.Drive;
 import frc.robot.commands.drive.DriveHDC;
 import frc.robot.util.constants.Constants.AutoConstants;
@@ -183,6 +187,7 @@ public class Swerve extends SubsystemBase implements Logged {
         } else {
             // Something in our pose was NaN...
             resetOdometry(robotPose2d);
+            resetEncoders();
             resetHDC();
         }
 
@@ -395,12 +400,26 @@ public class Swerve extends SubsystemBase implements Logged {
         return new DriveHDC(this, speeds, fieldRelative, () -> false);
     }
 
-    public Command resetHDC() {
-        return Commands.sequence(
-            Commands.runOnce(() -> AutoConstants.HDC.getThetaController().reset(getPose().getRotation().getRadians())),
-            Commands.runOnce(() -> AutoConstants.HDC.getXController().reset()),
-            Commands.runOnce(() -> AutoConstants.HDC.getYController().reset())
-        );
+    public Command updateChasePose(Supplier<Pose2d> poseSupplier) {
+        return Commands.runOnce(() -> ChasePose.updateDesiredPose(poseSupplier.get()));
+    }
+
+    public Command getChaseCommand() {
+        return new ChasePose(this);
+    }
+
+    public void resetHDCXY() {
+        AutoConstants.HDC.getXController().reset();
+        AutoConstants.HDC.getYController().reset();
+    }
+
+    public void resetHDC() {
+        AutoConstants.HDC.getThetaController().reset(getPose().getRotation().getRadians());
+        resetHDCXY();
+    }
+
+    public Command resetHDCCommand() {
+        return runOnce(() -> resetHDC());
     }
 
     public void reconfigureAutoBuilder() {
@@ -412,6 +431,15 @@ public class Swerve extends SubsystemBase implements Logged {
                 AutoConstants.HPFC,
                 Robot::isRedAlliance,
                 this);
+    }
+
+    public boolean atDesiredPose() {
+        Transform2d subtractedTransform = getPose().minus(desiredHDCPose);
+		Rotation2d subtractedRotation = getPose().getRotation().minus(desiredHDCPose.getRotation());
+		return 
+			MathUtil.applyDeadband(subtractedTransform.getX(), 0.1) == 0 &&
+			MathUtil.applyDeadband(subtractedTransform.getY(), 0.1) == 0 &&
+			MathUtil.applyDeadband(subtractedRotation.getRadians(), 0.1) == 0;
     }
 
 }

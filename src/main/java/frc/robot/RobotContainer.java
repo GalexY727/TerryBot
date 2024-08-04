@@ -147,7 +147,7 @@ public class RobotContainer implements Logged {
             () -> (!driver.getYButton()
                 && Robot.isRedAlliance())));
 
-        pathPlannerStorage = new PathPlannerStorage(driver.y().negate());
+        pathPlannerStorage = new PathPlannerStorage(driver.y().negate(), swerve, limelight);
         initializeComponents();
         prepareNamedCommands();
         // choreoPathStorage = new ChoreoStorage(driver.y());
@@ -235,7 +235,7 @@ public class RobotContainer implements Logged {
         
         controller.a().whileTrue(
             Commands.sequence(
-                swerve.resetHDC(),
+                swerve.resetHDCCommand(),
                 Commands.either(
                     alignmentCmds.trapAlignmentCommand(controller::getLeftY), 
                     alignmentCmds.ampAlignmentCommand(controller::getLeftX), 
@@ -248,7 +248,7 @@ public class RobotContainer implements Logged {
         controller.rightStick()
             .toggleOnTrue(
                 Commands.sequence(
-                    swerve.resetHDC(),
+                    swerve.resetHDCCommand(),
                     Commands.either(
                         alignmentCmds.sourceRotationalAlignment(controller::getLeftX, controller::getLeftY),
                         alignmentCmds.wingRotationalAlignment(controller::getLeftX, controller::getLeftY),
@@ -265,6 +265,16 @@ public class RobotContainer implements Logged {
 
         controller.rightBumper()
             .onTrue(pieceControl.toggleOut());
+
+        controller.povLeft().onTrue(swerve.getChaseCommand());
+
+        controller.povRight().onTrue(
+            swerve.updateChasePose(
+                () -> new Pose2d(
+                    Math.random() * 20, 
+                    Math.random() * 20, 
+                    new Rotation2d(
+                        Math.random() * Math.PI))));
     }
     
     private void configureSimulationBindings(PatriBoxController controller) {
