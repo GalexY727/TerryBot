@@ -159,6 +159,16 @@ public class PathPlannerStorage implements Logged {
                                 pathfindToNextNote(() -> currentIndex, () -> goingDown), 
                                 limelightHasNote(limelight)),
                         commandGroup.getRequirements()));
+            } else {
+                commandGroup.addCommands(
+                    Commands.defer(
+                        () -> 
+                            Commands.sequence(
+                                goToNote(swerve, limelight),
+                                pathfindToShoot(swerve)
+                            ).onlyIf(limelightHasNote(limelight)), 
+                        commandGroup.getRequirements())
+                );
             }
             
         }
