@@ -26,7 +26,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.event.NetworkBooleanEvent;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -385,22 +384,12 @@ public class Swerve extends SubsystemBase implements Logged {
         return new ChasePose(this);
     }
 
-    public void resetHDCXY() {
-        AutoConstants.HDC.getXController().reset();
-        AutoConstants.HDC.getYController().reset();
-    }
-
-    public void resetHDCTheta() {
+    public void resetHDC() {
         AutoConstants.HDC.getThetaController().reset(getPose().getRotation().getRadians());
     }
 
-    public void resetHDC() {
-        resetHDCTheta();
-        resetHDCXY();
-    }
-
     public Command resetHDCCommand() {
-        return runOnce(() -> resetHDC());
+        return Commands.runOnce(() -> resetHDC());
     }
 
     public void reconfigureAutoBuilder() {
@@ -415,19 +404,20 @@ public class Swerve extends SubsystemBase implements Logged {
     }
 
     public boolean atDesiredPoseAuto() {
-        Transform2d subtractedTransform = getPose().minus(desiredHDCPose);
-		Rotation2d subtractedRotation = getPose().getRotation().minus(desiredHDCPose.getRotation());
         // More lenient on x axis, less lenient on y axis and rotation
 		return 
-			MathUtil.applyDeadband(
-                subtractedTransform.getX(), 
-                AutoConstants.AUTO_POSITION_DEADBAND_METERS_X) == 0 &&
-			MathUtil.applyDeadband(
-                subtractedTransform.getY(), 
-                AutoConstants.AUTO_POSITION_DEADBAND_METERS_Y) == 0 &&
-			MathUtil.applyDeadband(
-                subtractedRotation.getRadians(), 
-                AutoConstants.AUTO_POSITION_DEADBAND_RADS) == 0;
+			MathUtil.isNear(
+                getPose().getX(), 
+                desiredHDCPose.getX(), 
+                AutoConstants.AUTO_POSITION_DEADBAND_METERS_X) &&
+			MathUtil.isNear(
+                getPose().getY(), 
+                desiredHDCPose.getY(), 
+                AutoConstants.AUTO_POSITION_DEADBAND_METERS_Y) &&
+            MathUtil.isNear(
+                getPose().getRotation().getRadians(), 
+                desiredHDCPose.getRotation().getRadians(), 
+                AutoConstants.AUTO_POSITION_DEADBAND_RADS);
     }
 
 }
