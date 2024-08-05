@@ -12,7 +12,9 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -162,11 +164,14 @@ public class Limelight extends SubsystemBase implements Logged{
         visableTags = knownFiducials.toArray(new Pose3d[0]);
     }
 
+    // TODO: test this logic in real life before running dynamic auto
     public Pose2d getNotePose2d() {
-        return noteInVision() 
-            ? LimelightHelpers.getTargetPose3d_RobotSpace(limelightName).toPose2d()
-                .relativeTo(FieldConstants.BLUE_ORIGIN)
-            : robotPoseSupplier.get();
+        if (noteInVision()) {
+            Translation2d noteTranslation = LimelightHelpers.getTargetPose3d_RobotSpace(limelightName).toPose2d().getTranslation();
+            Pose2d notePose = new Pose2d(noteTranslation, new Rotation2d()).rotateBy(robotPoseSupplier.get().getRotation());
+            return notePose.plus(new Transform2d(robotPoseSupplier.get().getTranslation(), new Rotation2d()));
+        }
+        return robotPoseSupplier.get();
     }
 
     public boolean noteInVision() {
