@@ -164,9 +164,6 @@ public class RobotContainer implements Logged {
     }
 
     private void configureButtonBindings() {
-        if (FieldConstants.IS_SIMULATION) {
-            configureSimulationBindings(driver);
-        }
         configureDriverBindings(driver);
         configureOperatorBindings(operator);
         configureTestBindings();
@@ -182,26 +179,6 @@ public class RobotContainer implements Logged {
         // for more information 
         configureHDCBindings(driver);
         configureCalibrationBindings(operator);
-    }
-    
-    private void configureOperatorBindings(PatriBoxController controller) {
-        controller.povUp()
-            .onTrue(elevator.toTopCommand());
-        
-        controller.povDown()
-            .onTrue(elevator.toBottomCommand());
-
-        controller.leftBumper()
-            .onTrue(pieceControl.toggleIn());
-
-        controller.rightBumper()
-            .onTrue(pieceControl.toggleOut());
-
-        controller.x()
-            .onTrue(pieceControl.setShooterModeCommand(true));
-
-        controller.b()
-            .onTrue(pieceControl.setShooterModeCommand(false));
     }
     
     private void configureDriverBindings(PatriBoxController controller) {
@@ -235,11 +212,8 @@ public class RobotContainer implements Logged {
                 swerve));
 
         controller.povUp()
-            .onTrue(shooterCmds.angleReset());
-
-        controller.povUp()
+            .onTrue(shooterCmds.stowPivot())
             .toggleOnTrue(climb.povUpCommand(swerve::getPose));
-
         
         controller.povDown().onTrue(climb.toBottomCommand());
         
@@ -250,7 +224,6 @@ public class RobotContainer implements Logged {
                     alignmentCmds.trapAlignmentCommand(controller::getLeftX, controller::getLeftY),
                     alignmentCmds.ampAlignmentCommand(controller::getLeftX), 
                     climb::getHooksUp)));
-        
         
         controller.rightTrigger()
             .onTrue(pieceControl.noteToTarget(swerve::getPose, swerve::getRobotRelativeVelocity));
@@ -266,23 +239,32 @@ public class RobotContainer implements Logged {
                     
         controller.b()
             .onTrue(pieceControl.stopAllMotors());
-
-        controller.x()
-            .toggleOnTrue(shooterCmds.prepareSWDCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
-
+            
         controller.leftBumper()
             .onTrue(pieceControl.toggleIn());
 
         controller.rightBumper()
             .onTrue(pieceControl.toggleOut());
     }
-    
-    private void configureSimulationBindings(PatriBoxController controller) {
-        controller.rightTrigger().onTrue(shooterCmds.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
-        controller.rightTrigger().onFalse(shooterCmds.getNoteTrajectoryCommand(swerve::getPose, swerve::getRobotRelativeVelocity));
-        controller.rightTrigger()
-            .onTrue(
-                pieceControl.shootWhenReady(swerve::getPose, swerve::getRobotRelativeVelocity));
+
+    private void configureOperatorBindings(PatriBoxController controller) {
+        controller.povUp()
+            .onTrue(elevator.toTopCommand());
+        
+        controller.povDown()
+            .onTrue(elevator.toBottomCommand());
+
+        controller.leftBumper()
+            .onTrue(pieceControl.toggleIn());
+
+        controller.rightBumper()
+            .onTrue(pieceControl.toggleOut());
+
+        controller.x()
+            .onTrue(pieceControl.setShooterModeCommand(true));
+
+        controller.b()
+            .onTrue(pieceControl.setShooterModeCommand(false));
     }
     
     private void configureCalibrationBindings(PatriBoxController controller) {
