@@ -41,3 +41,14 @@ With some cool math, we can see where AprilTags would be on the field even if we
 This allows us to fine tune where the optimal camera position is for the bot so that we can see the most tags possible (for a kalman filter with main bot pose)
 
 ![gif](https://github.com/user-attachments/assets/7294c0ba-c5e7-4006-956d-8f168cdf4720)
+
+## Object Detection
+
+With decision-making, we are able to follow dynamic autos that can be based on if our camera can see an object or not! This is pretty stellar
+*The robot only goes to the note if the camera can see it, which can be simulated with a controller in simulation by holding 'x'. 
+If it cannot see an object, it will skip over the location.
+
+
+![AdvantageScope_(WPILib)_avCZtabs8m](https://github.com/user-attachments/assets/c6fa4586-3975-4e27-bee3-0202e30c4e76)
+
+
