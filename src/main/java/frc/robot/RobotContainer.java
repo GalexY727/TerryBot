@@ -24,6 +24,7 @@ import frc.robot.commands.autonomous.PathPlannerStorage;
 import frc.robot.commands.drive.Drive;
 import frc.robot.commands.misc.leds.LPI;
 import frc.robot.commands.subsytemHelpers.AlignmentCmds;
+import frc.robot.commands.subsytemHelpers.NT;
 import frc.robot.commands.subsytemHelpers.NTPIDTuner;
 import frc.robot.commands.subsytemHelpers.PieceControl;
 import frc.robot.commands.subsytemHelpers.ShooterCmds;
@@ -137,7 +138,8 @@ public class RobotContainer implements Logged {
 
         Neo.incinerateMotors();
         new NTPIDTuner().schedule();
-        
+        new NT(NTConstants.WAIT_TIMES);
+
         shooterCalc = new ShooterCalc(shooter, pivot);
         shooterCmds = new ShooterCmds(shooter, pivot, shooterCalc);
 
@@ -188,6 +190,7 @@ public class RobotContainer implements Logged {
         // for more information 
         // configureHDCBindings(driver);
         configureCalibrationBindings(operator);
+
     }
     
     private void configureDriverBindings(PatriBoxController controller) {
@@ -198,14 +201,13 @@ public class RobotContainer implements Logged {
         controller.back().onTrue(
             Commands.runOnce(() -> swerve.resetOdometry(
                 new Pose2d(
-                    1.31,
+                    Robot.isRedAlliance() ? FieldConstants.FIELD_WIDTH_METERS - 1.31 : 1.31,
                     5.53, 
                     Rotation2d.fromDegrees(
                         Robot.isRedAlliance()
                             ? 0
                             : 180))), 
                 swerve));
-
         // Upon hitting start button
         // reset the orientation of the robot
         // to be facing TOWARDS the driver station
@@ -256,18 +258,20 @@ public class RobotContainer implements Logged {
             .onTrue(pieceControl.stopAllMotors());
             
         controller.leftBumper()
-            .onTrue(pieceControl.toggleIn());
+            .whileTrue(pieceControl.intakeToTrap())
+            .onFalse(pieceControl.stopIntakeAndIndexer());
 
         controller.rightBumper()
-            .onTrue(pieceControl.toggleOut());
+            .onTrue(pieceControl.ejectNote())
+            .onFalse(pieceControl.stopEjecting());
     }
 
     private void configureOperatorBindings(PatriBoxController controller) {
         controller.povUp()
-            .onTrue(elevator.toTopCommand());
+            .onTrue(pieceControl.elevatorToTop());
 
         controller.povLeft()
-            .onTrue(elevator.toAmpCommand());
+            .onTrue(pieceControl.elevatorToAmp());
 
         controller.povRight()
             .onTrue(trapper.toggleSpeed());
@@ -276,10 +280,12 @@ public class RobotContainer implements Logged {
             .onTrue(elevator.toBottomCommand());
 
         controller.leftBumper()
-            .onTrue(pieceControl.toggleIn());
+            .whileTrue(pieceControl.intakeToTrap())
+            .onFalse(pieceControl.stopIntakeAndIndexer());
 
         controller.rightBumper()
-            .onTrue(pieceControl.toggleOut());
+            .onTrue(pieceControl.ejectNote())
+            .onFalse(pieceControl.stopEjecting());
 
         controller.rightTrigger()
             .onTrue(
@@ -319,7 +325,7 @@ public class RobotContainer implements Logged {
         controller.y(testButtonBindingLoop).onTrue(calibrationControl.togglePivotLock());
 
         controller.pov(0, 270, testButtonBindingLoop)
-            .onTrue(pieceControl.toggleIn());
+            .onTrue(pieceControl.noteToTrap());
 
         controller.pov(0, 90, testButtonBindingLoop)
             .onTrue(pieceControl.ejectNote());
@@ -480,6 +486,7 @@ public class RobotContainer implements Logged {
 
     /**
      * This is explained in detail in discussion #180 of the 2024 repository of 4738
+     * https://github.com/Patribots4738/Crescendo2024/discussions/180
      */
     private void fixPathPlannerCommands() {
         registerPathToPathCommands();

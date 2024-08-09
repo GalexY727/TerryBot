@@ -226,11 +226,17 @@ public final class Constants {
         public static final double INTAKE_TIME = 0;
         public static final double TRAPPER_OUTTAKE_PERCENT = -1;
         public static final double TRAPPER_INTAKE_PERCENT = 1;
+        public static final double TRAPPER_OUTTAKE_SLOW = 0.3;
         public static final double TRAPPER_STOP_PERCENT = 0;
         public static final double TRAP_PLACE_POS = 0.49;
         public static final double AMP_PLACE_POS = 0.37;
         public static final double INDEX_POS = 0.09;
         public static final double DROP_POS = 0.11;
+        public static final double GUILLOTONE_POS = 0.25;
+        public static final double UNSTUCK_POS = 0.15;
+
+        public static final double STUCK_TIME_SECONDS = 0.1;
+        public static final double UNSTUCK_OUTTAKE_TIME_SECONDS = 0.3;
 
         public static final double ELEVATOR_TOP_LIMIT = 0.49;
         public static final double ELEVATOR_BOTTOM_LIMIT = 0;
@@ -863,5 +869,21 @@ public final class Constants {
             0, 
             PIVOT_OFFSET_Z);
         
+        public static final Map<String, Number> WAIT_TIMES = new HashMap<>() {{
+            put("noteToShoot1", 0.7);
+            put("noteToShoot2", 0.4);
+            put("noteToShoot3", 0.0);
+
+            put("intakeToTrap1", 0.5);
+            put("intakeToTrap2", 0.0);
+
+            put("noteToIndexer1", 0.6);
+            put("noteToIndexer2", 0.07);
+            put("noteToIndexer3", 0.0);
+
+            put("noteToTrap1", 0.2);
+            put("noteToTrap2", 0.5);
+            put("noteToTrap3", 0.0);
+        }};
     }
 }
