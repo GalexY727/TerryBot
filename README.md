@@ -52,3 +52,4 @@ If it cannot see an object, it will skip over the location.
 ![AdvantageScope_(WPILib)_avCZtabs8m](https://github.com/user-attachments/assets/c6fa4586-3975-4e27-bee3-0202e30c4e76)
 
 
+Keep in mind this project requires NetworkTables to run, but if you would like to run it in simulation you can do so by launching the newly installed WPIlib VSCode (from running the .bat file) and pressing CTRL+SHIFT+P and typing "simulate robot code"
